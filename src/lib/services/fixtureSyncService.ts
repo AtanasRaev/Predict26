@@ -38,20 +38,30 @@ export async function syncFixtures(
     let synced = 0;
 
     for (const fdMatch of data.matches) {
+      // Skip TBD / placeholder matches where teams aren't assigned yet
+      if (!fdMatch.homeTeam?.id || !fdMatch.awayTeam?.id) continue;
+
+      const homeShortName =
+        fdMatch.homeTeam.shortName || fdMatch.homeTeam.tla || fdMatch.homeTeam.name || "TBD";
+      const awayShortName =
+        fdMatch.awayTeam.shortName || fdMatch.awayTeam.tla || fdMatch.awayTeam.name || "TBD";
+      const homeCrest = fdMatch.homeTeam.crest ?? "";
+      const awayCrest = fdMatch.awayTeam.crest ?? "";
+
       // Upsert home team
       await prisma.team.upsert({
         where: { externalId: fdMatch.homeTeam.id },
         create: {
           externalId: fdMatch.homeTeam.id,
           name: fdMatch.homeTeam.name,
-          shortName: fdMatch.homeTeam.shortName || fdMatch.homeTeam.tla,
-          crestUrl: fdMatch.homeTeam.crest,
+          shortName: homeShortName,
+          crestUrl: homeCrest,
           groupId: fdMatch.group ?? null,
         },
         update: {
           name: fdMatch.homeTeam.name,
-          shortName: fdMatch.homeTeam.shortName || fdMatch.homeTeam.tla,
-          crestUrl: fdMatch.homeTeam.crest,
+          shortName: homeShortName,
+          crestUrl: homeCrest,
         },
       });
 
@@ -61,14 +71,14 @@ export async function syncFixtures(
         create: {
           externalId: fdMatch.awayTeam.id,
           name: fdMatch.awayTeam.name,
-          shortName: fdMatch.awayTeam.shortName || fdMatch.awayTeam.tla,
-          crestUrl: fdMatch.awayTeam.crest,
+          shortName: awayShortName,
+          crestUrl: awayCrest,
           groupId: fdMatch.group ?? null,
         },
         update: {
           name: fdMatch.awayTeam.name,
-          shortName: fdMatch.awayTeam.shortName || fdMatch.awayTeam.tla,
-          crestUrl: fdMatch.awayTeam.crest,
+          shortName: awayShortName,
+          crestUrl: awayCrest,
         },
       });
 

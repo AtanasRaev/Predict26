@@ -41,6 +41,7 @@ export async function syncStandings(
       if (standingGroup.type !== "TOTAL") continue;
 
       for (const entry of standingGroup.table) {
+        if (!entry.team?.id) continue;
         const team = await prisma.team.findUnique({
           where: { externalId: entry.team.id },
           select: { id: true },

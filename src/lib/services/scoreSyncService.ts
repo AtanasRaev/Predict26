@@ -78,6 +78,7 @@ export async function syncRecentScores(
           fdMatch.score.winner === "HOME_TEAM"
             ? fdMatch.homeTeam.id
             : fdMatch.awayTeam.id;
+        if (!teamExternalId) continue;
         const team = await prisma.team.findUnique({
           where: { externalId: teamExternalId },
           select: { id: true },

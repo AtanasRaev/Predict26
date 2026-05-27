@@ -1,9 +1,9 @@
 export interface FDTeam {
-  id: number;
+  id: number | null;
   name: string;
-  shortName: string;
-  tla: string;
-  crest: string;
+  shortName: string | null;
+  tla: string | null;
+  crest: string | null;
 }
 
 export interface FDScore {
