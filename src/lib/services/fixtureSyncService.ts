@@ -1,0 +1,125 @@
+import { prisma } from "@/lib/prisma";
+import { fetchMatches } from "@/lib/football-data/client";
+import { mapStatus, isKnockoutStage } from "@/lib/football-data/mappers";
+import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
+
+const FIXTURE_COOLDOWN_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+export interface FixtureSyncResult {
+  synced: number;
+  skipped: boolean;
+  reason?: string;
+}
+
+export async function syncFixtures(
+  forceBypass = false
+): Promise<FixtureSyncResult> {
+  if (!forceBypass) {
+    const lastSync = await getLastSuccessfulSync("FIXTURES");
+    if (lastSync?.finishedAt) {
+      const msSince = Date.now() - lastSync.finishedAt.getTime();
+      if (msSince < FIXTURE_COOLDOWN_MS) {
+        const minutesLeft = Math.ceil(
+          (FIXTURE_COOLDOWN_MS - msSince) / 60_000
+        );
+        return {
+          synced: 0,
+          skipped: true,
+          reason: `Cooldown active — ${minutesLeft} minutes remaining`,
+        };
+      }
+    }
+  }
+
+  return withSyncLog("FIXTURES", async (incrementRequests) => {
+    const data = await fetchMatches("WC", 2026);
+    incrementRequests();
+
+    let synced = 0;
+
+    for (const fdMatch of data.matches) {
+      // Upsert home team
+      await prisma.team.upsert({
+        where: { externalId: fdMatch.homeTeam.id },
+        create: {
+          externalId: fdMatch.homeTeam.id,
+          name: fdMatch.homeTeam.name,
+          shortName: fdMatch.homeTeam.shortName || fdMatch.homeTeam.tla,
+          crestUrl: fdMatch.homeTeam.crest,
+          groupId: fdMatch.group ?? null,
+        },
+        update: {
+          name: fdMatch.homeTeam.name,
+          shortName: fdMatch.homeTeam.shortName || fdMatch.homeTeam.tla,
+          crestUrl: fdMatch.homeTeam.crest,
+        },
+      });
+
+      // Upsert away team
+      await prisma.team.upsert({
+        where: { externalId: fdMatch.awayTeam.id },
+        create: {
+          externalId: fdMatch.awayTeam.id,
+          name: fdMatch.awayTeam.name,
+          shortName: fdMatch.awayTeam.shortName || fdMatch.awayTeam.tla,
+          crestUrl: fdMatch.awayTeam.crest,
+          groupId: fdMatch.group ?? null,
+        },
+        update: {
+          name: fdMatch.awayTeam.name,
+          shortName: fdMatch.awayTeam.shortName || fdMatch.awayTeam.tla,
+          crestUrl: fdMatch.awayTeam.crest,
+        },
+      });
+
+      // Fetch local team IDs
+      const [homeTeam, awayTeam] = await Promise.all([
+        prisma.team.findUnique({ where: { externalId: fdMatch.homeTeam.id } }),
+        prisma.team.findUnique({ where: { externalId: fdMatch.awayTeam.id } }),
+      ]);
+
+      if (!homeTeam || !awayTeam) continue;
+
+      const status = mapStatus(fdMatch.status);
+      const knockout = isKnockoutStage(fdMatch.stage);
+
+      // Determine winner team ID if available
+      let winnerTeamId: string | null = null;
+      if (fdMatch.score.winner === "HOME_TEAM") winnerTeamId = homeTeam.id;
+      else if (fdMatch.score.winner === "AWAY_TEAM") winnerTeamId = awayTeam.id;
+
+      await prisma.match.upsert({
+        where: { externalMatchId: String(fdMatch.id) },
+        create: {
+          externalMatchId: String(fdMatch.id),
+          homeTeamId: homeTeam.id,
+          awayTeamId: awayTeam.id,
+          utcDate: new Date(fdMatch.utcDate),
+          stage: fdMatch.stage,
+          group: fdMatch.group ?? null,
+          status,
+          homeScore: fdMatch.score.fullTime.home,
+          awayScore: fdMatch.score.fullTime.away,
+          winnerTeamId,
+          isKnockout: knockout,
+          lastSyncedAt: new Date(),
+        },
+        update: {
+          utcDate: new Date(fdMatch.utcDate),
+          stage: fdMatch.stage,
+          group: fdMatch.group ?? null,
+          status,
+          homeScore: fdMatch.score.fullTime.home,
+          awayScore: fdMatch.score.fullTime.away,
+          winnerTeamId,
+          isKnockout: knockout,
+          lastSyncedAt: new Date(),
+        },
+      });
+
+      synced++;
+    }
+
+    return { synced, skipped: false };
+  });
+}

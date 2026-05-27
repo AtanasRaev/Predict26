@@ -1,0 +1,135 @@
+// Prisma 7 schema for Predict26 – World Cup 2026 prediction app
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  POSTPONED
+  CANCELLED
+}
+
+enum SyncType {
+  FIXTURES
+  SCORES
+  STANDINGS
+}
+
+enum SyncStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  firstName    String
+  lastName     String
+  passwordHash String
+  role         Role         @default(USER)
+  createdAt    DateTime     @default(now())
+  predictions  Prediction[]
+}
+
+model Team {
+  id          String     @id @default(cuid())
+  externalId  Int        @unique
+  name        String
+  shortName   String
+  crestUrl    String
+  groupId     String?
+  homeMatches Match[]    @relation("HomeTeam")
+  awayMatches Match[]    @relation("AwayTeam")
+  wonMatches  Match[]    @relation("WinnerTeam")
+  standings   Standing[]
+}
+
+model Match {
+  id              String      @id @default(cuid())
+  externalMatchId String      @unique
+  homeTeamId      String
+  awayTeamId      String
+  utcDate         DateTime
+  stage           String
+  group           String?
+  status          MatchStatus @default(SCHEDULED)
+  homeScore       Int?
+  awayScore       Int?
+  winnerTeamId    String?
+  isKnockout      Boolean     @default(false)
+  lastSyncedAt    DateTime?
+  homeTeam        Team        @relation("HomeTeam",   fields: [homeTeamId],   references: [id])
+  awayTeam        Team        @relation("AwayTeam",   fields: [awayTeamId],   references: [id])
+  winnerTeam      Team?       @relation("WinnerTeam", fields: [winnerTeamId], references: [id])
+  predictions     Prediction[]
+
+  @@index([utcDate])
+  @@index([status])
+  @@index([lastSyncedAt])
+}
+
+model Prediction {
+  id                   String    @id @default(cuid())
+  userId               String
+  matchId              String
+  predictedHomeGoals   Int
+  predictedAwayGoals   Int
+  predictedQualifierId String?
+  points               Int?
+  exactScore           Boolean?
+  correctOutcome       Boolean?
+  qualifierBonus       Boolean?
+  consolation          Boolean?
+  lockedAt             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId],  references: [id])
+  match                Match     @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+  @@index([userId])
+}
+
+model Standing {
+  id           String    @id @default(cuid())
+  groupName    String
+  teamId       String
+  position     Int
+  played       Int       @default(0)
+  won          Int       @default(0)
+  drawn        Int       @default(0)
+  lost         Int       @default(0)
+  goalsFor     Int       @default(0)
+  goalsAgainst Int       @default(0)
+  points       Int       @default(0)
+  lastSyncedAt DateTime?
+  team         Team      @relation(fields: [teamId], references: [id])
+
+  @@unique([groupName, teamId])
+  @@index([groupName])
+}
+
+model ApiSyncLog {
+  id           String     @id @default(cuid())
+  syncType     SyncType
+  startedAt    DateTime   @default(now())
+  finishedAt   DateTime?
+  status       SyncStatus @default(PENDING)
+  errorMessage String?
+  requestCount Int        @default(0)
+}
