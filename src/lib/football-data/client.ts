@@ -23,7 +23,9 @@ async function apiFetch<T>(path: string): Promise<T> {
     throw new Error("FORBIDDEN: check your API key or plan restrictions");
   }
   if (!res.ok) {
-    throw new Error(`API_ERROR:${res.status} ${res.statusText}`);
+    let body = "";
+    try { body = await res.text(); } catch { /* ignore */ }
+    throw new Error(`API_ERROR:${res.status} — ${body || res.statusText}`);
   }
 
   return res.json() as Promise<T>;

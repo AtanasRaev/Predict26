@@ -59,7 +59,7 @@ export interface FDStandingEntry {
 export interface FDStandingsGroup {
   stage: string;
   type: "TOTAL" | "HOME" | "AWAY";
-  group: string;
+  group: string | null;
   table: FDStandingEntry[];
 }
 

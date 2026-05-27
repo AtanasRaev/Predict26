@@ -37,8 +37,9 @@ export async function syncStandings(
     let synced = 0;
 
     for (const standingGroup of data.standings) {
-      // Only process TOTAL type standings (not HOME/AWAY splits)
+      // Only process TOTAL type standings with a named group (skip knockout rows)
       if (standingGroup.type !== "TOTAL") continue;
+      if (!standingGroup.group) continue;
 
       for (const entry of standingGroup.table) {
         if (!entry.team?.id) continue;
