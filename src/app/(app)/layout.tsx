@@ -21,7 +21,7 @@ export default async function AppLayout({
           {children}
         </main>
         <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-          Predict26 — World Cup 2026 · Data from football-data.org
+          World Cup 2026 · Data from football-data.org
         </footer>
       </div>
     </SessionProvider>

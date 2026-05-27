@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { TeamCrest } from "@/components/ui/TeamCrest";
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     hour: "2-digit",

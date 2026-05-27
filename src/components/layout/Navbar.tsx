@@ -28,7 +28,6 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <Trophy className="h-5 w-5 text-yellow-500" />
-            <span>Predict26</span>
           </Link>
 
           {/* Desktop nav */}

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
 function formatDateTime(date: Date | string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     hour: "2-digit",

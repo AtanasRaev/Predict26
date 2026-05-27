@@ -51,7 +51,7 @@ export default function LoginPage() {
         <div className="flex justify-center mb-2">
           <Trophy className="h-8 w-8 text-yellow-500" />
         </div>
-        <CardTitle className="text-2xl">Predict26</CardTitle>
+        <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>Sign in to your account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -68,7 +68,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="your_username"
+              placeholder="your username"
               required
               autoComplete="username"
             />

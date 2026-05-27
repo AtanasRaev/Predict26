@@ -92,7 +92,7 @@ export default function RegisterPage() {
           <Trophy className="h-8 w-8 text-yellow-500" />
         </div>
         <CardTitle className="text-2xl">Create Account</CardTitle>
-        <CardDescription>Join Predict26 and compete with friends</CardDescription>
+        <CardDescription>Join and compete with friends</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-3">

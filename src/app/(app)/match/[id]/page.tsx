@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TeamCrest } from "@/components/ui/TeamCrest";
 import { PredictionForm } from "@/components/predictions/PredictionForm";
 import { Badge } from "@/components/ui/badge";
-import { canSeePredictions } from "@/lib/utils/predictionVisibility";
+import { canSeePredictions, isMatchToday } from "@/lib/utils/predictionVisibility";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,7 +28,8 @@ async function getMatch(id: string, userId: string) {
 }
 
 function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -127,7 +128,7 @@ export default async function MatchPage({ params }: PageProps) {
       </div>
 
       {/* Prediction form */}
-      {!predictionsVisible && (
+      {!predictionsVisible && isMatchToday(match.utcDate) && (
         <div className="border rounded-lg p-4 bg-card">
           <h2 className="font-semibold mb-3">Your Prediction</h2>
           <PredictionForm
@@ -138,6 +139,13 @@ export default async function MatchPage({ params }: PageProps) {
             matchUtcDate={match.utcDate}
             existingPrediction={userPrediction}
           />
+        </div>
+      )}
+
+      {/* Not open yet — match is in the future but not today */}
+      {!predictionsVisible && !isMatchToday(match.utcDate) && (
+        <div className="border rounded-lg p-4 bg-card text-center text-sm text-muted-foreground">
+          🗓️ Predictions for this match open on match day.
         </div>
       )}
 

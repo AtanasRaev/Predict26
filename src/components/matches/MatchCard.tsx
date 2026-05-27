@@ -30,11 +30,12 @@ interface MatchCardProps {
   isKnockout: boolean;
   predictionCount: number;
   userPrediction?: UserPrediction | null;
-  predictionStatus?: "predicted" | "not_predicted" | "locked";
+  predictionStatus?: "predicted" | "not_predicted" | "locked" | "not_open";
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -74,7 +75,7 @@ function StatusBadge({ status }: { status: string }) {
 function PredictionBadge({
   status,
 }: {
-  status?: "predicted" | "not_predicted" | "locked";
+  status?: "predicted" | "not_predicted" | "locked" | "not_open";
 }) {
   if (!status) return null;
 
@@ -89,6 +90,13 @@ function PredictionBadge({
     return (
       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-700">
         Predict now
+      </span>
+    );
+  }
+  if (status === "not_open") {
+    return (
+      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+        Not open yet
       </span>
     );
   }
