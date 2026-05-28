@@ -94,9 +94,6 @@ export default async function MatchPage({ params }: PageProps) {
         <div className="flex flex-col items-center gap-2">
           <TeamCrest crestUrl={match.homeTeam.crestUrl} teamName={match.homeTeam.name} size="lg" />
           <span className="font-semibold">{match.homeTeam.shortName}</span>
-          {match.winnerTeamId === match.homeTeamId && (
-            <Badge variant="secondary" className="text-xs">Qualified</Badge>
-          )}
         </div>
 
         {/* Score */}
@@ -121,9 +118,6 @@ export default async function MatchPage({ params }: PageProps) {
         <div className="flex flex-col items-center gap-2">
           <TeamCrest crestUrl={match.awayTeam.crestUrl} teamName={match.awayTeam.name} size="lg" />
           <span className="font-semibold">{match.awayTeam.shortName}</span>
-          {match.winnerTeamId === match.awayTeamId && (
-            <Badge variant="secondary" className="text-xs">Qualified</Badge>
-          )}
         </div>
       </div>
 
@@ -133,7 +127,6 @@ export default async function MatchPage({ params }: PageProps) {
           <h2 className="font-semibold mb-3">Your Prediction</h2>
           <PredictionForm
             matchId={match.id}
-            isKnockout={match.isKnockout}
             homeTeam={match.homeTeam}
             awayTeam={match.awayTeam}
             matchUtcDate={match.utcDate}
@@ -211,16 +204,13 @@ export default async function MatchPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Scoring explanation for knockout */}
-      {match.isKnockout && (
-        <div className="text-xs text-muted-foreground border rounded-lg p-3 space-y-1">
-          <p className="font-medium text-foreground">Knockout scoring (90 min only)</p>
-          <p>• Exact 90-min score = 3 pts</p>
-          <p>• Correct 90-min outcome = 1 pt</p>
-          <p>• Predicted draw + correct qualifier = +1 pt</p>
-          <p>• Wrong outcome but predicted winner qualifies = 1 consolation pt</p>
-        </div>
-      )}
+      {/* Scoring explanation */}
+      <div className="text-xs text-muted-foreground border rounded-lg p-3 space-y-1">
+        <p className="font-medium text-foreground">Scoring</p>
+        <p>• Exact score = 3 pts</p>
+        <p>• Correct outcome (1X2) = 1 pt</p>
+        <p>• Wrong = 0 pts</p>
+      </div>
     </div>
   );
 }

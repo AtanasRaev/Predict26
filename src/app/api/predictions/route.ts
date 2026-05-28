@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
-    select: { id: true, utcDate: true, isKnockout: true, status: true },
+    select: { id: true, utcDate: true, status: true },
   });
 
   if (!match) {
@@ -56,19 +56,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Validate qualifier: required for knockout draws
-  const isPredictedDraw = predictedHomeGoals === predictedAwayGoals;
-  if (match.isKnockout && isPredictedDraw && !predictedQualifierId) {
-    return NextResponse.json(
-      { error: "You must select a qualifier for knockout draw predictions" },
-      { status: 400 }
-    );
-  }
-
-  // Clear qualifier for non-draw predictions (or non-knockout)
-  const qualifierId =
-    match.isKnockout && isPredictedDraw ? (predictedQualifierId ?? null) : null;
-
   const prediction = await prisma.prediction.upsert({
     where: {
       userId_matchId: { userId: session.user.id, matchId: match.id },
@@ -78,12 +65,12 @@ export async function POST(req: NextRequest) {
       matchId: match.id,
       predictedHomeGoals,
       predictedAwayGoals,
-      predictedQualifierId: qualifierId,
+      predictedQualifierId: null,
     },
     update: {
       predictedHomeGoals,
       predictedAwayGoals,
-      predictedQualifierId: qualifierId,
+      predictedQualifierId: null,
     },
     select: {
       id: true,

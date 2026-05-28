@@ -3,9 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { getPredictionLockTime } from "@/lib/constants";
-import { TeamCrest } from "@/components/ui/TeamCrest";
 
 interface Team {
   id: string;
@@ -16,14 +14,12 @@ interface Team {
 
 interface PredictionFormProps {
   matchId: string;
-  isKnockout: boolean;
   homeTeam: Team;
   awayTeam: Team;
   matchUtcDate: Date;
   existingPrediction?: {
     predictedHomeGoals: number;
     predictedAwayGoals: number;
-    predictedQualifierId?: string | null;
   } | null;
   onSaved?: () => void;
 }
@@ -62,7 +58,6 @@ function formatCountdown(ms: number): string {
 
 export function PredictionForm({
   matchId,
-  isKnockout,
   homeTeam,
   awayTeam,
   matchUtcDate,
@@ -74,32 +69,14 @@ export function PredictionForm({
   const isLocked = timeLeft <= 0;
 
   const [homeGoals, setHomeGoals] = useState<string>(
-    existingPrediction !== null && existingPrediction !== undefined
-      ? String(existingPrediction.predictedHomeGoals)
-      : ""
+    existingPrediction != null ? String(existingPrediction.predictedHomeGoals) : ""
   );
   const [awayGoals, setAwayGoals] = useState<string>(
-    existingPrediction !== null && existingPrediction !== undefined
-      ? String(existingPrediction.predictedAwayGoals)
-      : ""
-  );
-  const [qualifierId, setQualifierId] = useState<string>(
-    existingPrediction?.predictedQualifierId ?? ""
+    existingPrediction != null ? String(existingPrediction.predictedAwayGoals) : ""
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-
-  const isPredictedDraw =
-    homeGoals !== "" &&
-    awayGoals !== "" &&
-    parseInt(homeGoals) === parseInt(awayGoals);
-  const showQualifier = isKnockout && isPredictedDraw;
-
-  // Clear qualifier when no longer a draw
-  useEffect(() => {
-    if (!showQualifier) setQualifierId("");
-  }, [showQualifier]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -114,10 +91,6 @@ export function PredictionForm({
         setError("Please enter a valid score for both teams.");
         return;
       }
-      if (showQualifier && !qualifierId) {
-        setError("Please choose which team qualifies.");
-        return;
-      }
 
       setSaving(true);
       try {
@@ -128,7 +101,6 @@ export function PredictionForm({
             matchId,
             predictedHomeGoals: h,
             predictedAwayGoals: a,
-            predictedQualifierId: qualifierId || null,
           }),
         });
 
@@ -146,7 +118,7 @@ export function PredictionForm({
         setSaving(false);
       }
     },
-    [isLocked, homeGoals, awayGoals, qualifierId, showQualifier, matchId, onSaved]
+    [isLocked, homeGoals, awayGoals, matchId, onSaved]
   );
 
   if (isLocked) {
@@ -188,30 +160,6 @@ export function PredictionForm({
 
         <div className="flex-1 text-sm font-medium">{awayTeam.shortName}</div>
       </div>
-
-      {/* Qualifier selector for knockout draws */}
-      {showQualifier && (
-        <div className="space-y-2">
-          <Label className="text-sm">Who qualifies?</Label>
-          <div className="flex gap-3">
-            {[homeTeam, awayTeam].map((team) => (
-              <button
-                key={team.id}
-                type="button"
-                onClick={() => setQualifierId(team.id)}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-md border p-2.5 text-sm font-medium transition-colors ${
-                  qualifierId === team.id
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "hover:bg-muted"
-                }`}
-              >
-                <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="sm" />
-                {team.shortName}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {error && (
         <p className="text-sm text-destructive">{error}</p>

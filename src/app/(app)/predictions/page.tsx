@@ -107,8 +107,6 @@ export default async function MyPredictionsPage() {
                         <div className="text-xs text-muted-foreground flex gap-1">
                           {pred.exactScore && <span title="Exact score">🎯</span>}
                           {pred.correctOutcome && !pred.exactScore && <span title="Correct outcome">✓</span>}
-                          {pred.qualifierBonus && <span title="Qualifier bonus">+Q</span>}
-                          {pred.consolation && <span title="Consolation">~</span>}
                         </div>
                       </div>
                     ) : (

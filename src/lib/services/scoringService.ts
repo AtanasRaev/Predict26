@@ -29,15 +29,11 @@ type PredictionData = {
  * Pure scoring logic — no DB access.
  * Returns a ScoringResult with points and breakdown booleans.
  *
- * KNOCKOUT RULES (max 4 pts):
+ * ALL MATCHES (group stage and knockout) use the same rules:
  *   - Exact 90-min score = 3 pts
- *   - Correct 90-min outcome (decisive) = 1 pt
- *   - If real result was draw AND user predicted draw AND correct qualifier = +1
- *   - If user predicted decisive winner and 90-min was wrong, but that team
- *     ultimately qualifies (ET/pens) = 1 consolation (never stacks on correct)
- *
- * GROUP STAGE RULES:
- *   - Exact = 3, Correct outcome = 1, Wrong = 0
+ *   - Correct 90-min outcome (1X2) = 1 pt
+ *   - Wrong = 0 pts
+ *   Maximum = 3 pts
  */
 export function calculatePredictionPoints(
   prediction: PredictionData,
@@ -54,66 +50,21 @@ export function calculatePredictionPoints(
   if (match.status !== MatchStatus.FINISHED) return zero;
   if (match.homeScore === null || match.awayScore === null) return zero;
 
-  const { predictedHomeGoals: pH, predictedAwayGoals: pA, predictedQualifierId: pQual } = prediction;
-  const { homeScore: rH, awayScore: rA, winnerTeamId, homeTeamId, awayTeamId, isKnockout } = match;
+  const { predictedHomeGoals: pH, predictedAwayGoals: pA } = prediction;
+  const { homeScore: rH, awayScore: rA } = match;
 
   const predictedOutcome = pH > pA ? "H" : pH < pA ? "A" : "D";
   const realOutcome = rH > rA ? "H" : rH < rA ? "A" : "D";
   const isExactScore = pH === rH && pA === rA;
   const isCorrectOutcome = predictedOutcome === realOutcome;
 
-  // ── GROUP STAGE ──────────────────────────────────────────────────────────
-  if (!isKnockout) {
-    if (isExactScore) {
-      return { points: 3, exactScore: true, correctOutcome: true, qualifierBonus: false, consolation: false };
-    }
-    if (isCorrectOutcome) {
-      return { points: 1, exactScore: false, correctOutcome: true, qualifierBonus: false, consolation: false };
-    }
-    return zero;
-  }
-
-  // ── KNOCKOUT STAGE ───────────────────────────────────────────────────────
-  let points = 0;
-  let exactScore = false;
-  let correctOutcome = false;
-  let qualifierBonus = false;
-  let consolation = false;
-
   if (isExactScore) {
-    points += 3;
-    exactScore = true;
-    correctOutcome = true;
-  } else if (isCorrectOutcome && realOutcome !== "D") {
-    // Correct decisive 90-min outcome (not exact)
-    points += 1;
-    correctOutcome = true;
-  } else if (isCorrectOutcome && realOutcome === "D") {
-    // Both predicted and actual were draw
-    points += 1;
-    correctOutcome = true;
+    return { points: 3, exactScore: true, correctOutcome: true, qualifierBonus: false, consolation: false };
   }
-
-  // Qualifier bonus: only when BOTH real result and prediction were draw
-  // AND the user's qualifier pick is correct
-  if (realOutcome === "D" && predictedOutcome === "D" && pQual && pQual === winnerTeamId) {
-    points += 1;
-    qualifierBonus = true;
+  if (isCorrectOutcome) {
+    return { points: 1, exactScore: false, correctOutcome: true, qualifierBonus: false, consolation: false };
   }
-
-  // Consolation: only when points so far = 0 (outcome was wrong)
-  // User predicted decisive winner, but 90-min was a different result,
-  // yet that predicted winner still qualifies
-  if (points === 0 && predictedOutcome !== "D") {
-    const predictedWinnerId =
-      predictedOutcome === "H" ? homeTeamId : awayTeamId;
-    if (predictedWinnerId === winnerTeamId) {
-      points += 1;
-      consolation = true;
-    }
-  }
-
-  return { points, exactScore, correctOutcome, qualifierBonus, consolation };
+  return zero;
 }
 
 /**
