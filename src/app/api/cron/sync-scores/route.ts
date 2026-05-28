@@ -3,6 +3,8 @@ import { isWithinTournamentWindow } from "@/lib/constants";
 import { syncRecentScores } from "@/lib/services/scoreSyncService";
 import { syncStandings } from "@/lib/services/standingsSyncService";
 import { recalculateMatchPointsByIds } from "@/lib/services/scoringService";
+import { sendPredictionReminders, sendPredictionOpenedNotifications } from "@/lib/services/notificationService";
+import { broadcast } from "@/lib/events/broadcaster";
 
 export async function GET(req: NextRequest) {
   // Validate cron secret
@@ -38,10 +40,21 @@ export async function GET(req: NextRequest) {
       await recalculateRecentMatchPoints();
     }
 
+    // Push live update to every connected browser tab
+    broadcast("refresh", { reason: "cron-scores" });
+
+    // Push notifications: "predictions just opened" + "1 h before lock" reminder
+    // Both run in parallel — they target different matches so there's no conflict.
+    const [openedResult, reminderResult] = await Promise.all([
+      sendPredictionOpenedNotifications(),
+      sendPredictionReminders(),
+    ]);
+
     return NextResponse.json({
       ok: true,
       synced: scoreResult.synced,
       newlyFinished: scoreResult.newlyFinishedMatchIds.length,
+      notifications: { opened: openedResult, reminder: reminderResult },
     });
   } catch (err) {
     console.error("[Cron Error]", err);

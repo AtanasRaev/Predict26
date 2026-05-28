@@ -3,6 +3,7 @@ import { requireAdmin, handleAdminError } from "@/lib/utils/adminGuard";
 import { syncRecentScores } from "@/lib/services/scoreSyncService";
 import { syncStandings } from "@/lib/services/standingsSyncService";
 import { recalculateMatchPointsByIds } from "@/lib/services/scoringService";
+import { broadcast } from "@/lib/events/broadcaster";
 
 export async function POST() {
   try {
@@ -14,6 +15,9 @@ export async function POST() {
       await syncStandings(true);
       await recalculateMatchPointsByIds(result.newlyFinishedMatchIds);
     }
+
+    // Push live update so all open tabs refresh scores/points immediately
+    broadcast("refresh", { reason: "scores" });
 
     return NextResponse.json(result);
   } catch (err) {

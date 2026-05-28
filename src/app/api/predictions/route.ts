@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPredictionLockTime } from "@/lib/constants";
 import { isMatchWithinPredictionWindow } from "@/lib/utils/predictionVisibility";
+import { broadcast } from "@/lib/events/broadcaster";
 import { z } from "zod";
 
 const predictionSchema = z.object({
@@ -82,6 +83,9 @@ export async function POST(req: NextRequest) {
       updatedAt: true,
     },
   });
+
+  // Push a live update to every connected browser tab
+  broadcast("refresh", { reason: "prediction", matchId: match.id });
 
   return NextResponse.json(prediction);
 }

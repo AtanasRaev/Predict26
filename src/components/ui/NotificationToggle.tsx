@@ -1,0 +1,193 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Bell, BellOff, BellRing } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+/** Convert VAPID base64url string to a plain ArrayBuffer for PushManager.subscribe() */
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const buffer = new ArrayBuffer(rawData.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; i++) view[i] = rawData.charCodeAt(i);
+  return buffer;
+}
+
+type NotifState =
+  | "loading"       // Checking current state
+  | "unsupported"   // Browser doesn't support push
+  | "ios-hint"      // iOS Safari — needs "Add to Home Screen" first
+  | "denied"        // User previously blocked notifications
+  | "subscribed"    // Active subscription in DB
+  | "unsubscribed"; // Supported + permitted, but not subscribed
+
+export function NotificationToggle() {
+  const [state, setState] = useState<NotifState>("loading");
+  const [busy, setBusy] = useState(false);
+  const [tooltip, setTooltip] = useState(false);
+
+  useEffect(() => {
+    // iOS Safari requires the app to be installed as a PWA (Add to Home Screen)
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setState(isIOS && !isStandalone ? "ios-hint" : "unsupported");
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      setState("denied");
+      return;
+    }
+
+    // Check if there's already an active subscription in the push manager
+    navigator.serviceWorker.ready
+      .then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription();
+        setState(sub ? "subscribed" : "unsubscribed");
+      })
+      .catch(() => setState("unsubscribed"));
+  }, []);
+
+  const subscribe = async () => {
+    setBusy(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "denied") { setState("denied"); return; }
+      if (permission !== "granted") { setState("unsubscribed"); return; }
+
+      const reg = await navigator.serviceWorker.ready;
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidKey) throw new Error("VAPID public key not configured");
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToArrayBuffer(vapidKey),
+      });
+
+      const json = sub.toJSON();
+      const res = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          endpoint: json.endpoint,
+          keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+        }),
+      });
+
+      if (res.ok) {
+        setState("subscribed");
+      } else {
+        throw new Error("Server rejected subscription");
+      }
+    } catch (err) {
+      console.error("[Push] subscribe error:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unsubscribe = async () => {
+    setBusy(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setState("unsubscribed");
+    } catch (err) {
+      console.error("[Push] unsubscribe error:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Don't show anything while loading
+  if (state === "loading") return null;
+
+  // iOS not installed as PWA
+  if (state === "ios-hint") {
+    return (
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setTooltip((v) => !v)}
+          className="text-muted-foreground"
+          title="Push notifications require iOS Home Screen install"
+        >
+          <Bell className="h-4 w-4" />
+        </Button>
+        {tooltip && (
+          <div className="absolute right-0 top-9 z-50 w-64 rounded-lg border bg-card p-3 text-xs shadow-lg">
+            <p className="font-semibold mb-1">📱 Enable on iPhone</p>
+            <p className="text-muted-foreground">
+              Tap <strong>Share → Add to Home Screen</strong> in Safari, then open
+              the app from your Home Screen to enable push notifications.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Completely unsupported (desktop non-Chrome, etc.)
+  if (state === "unsupported") return null;
+
+  // Blocked by the user
+  if (state === "denied") {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="text-muted-foreground/40 cursor-not-allowed"
+        title="Notifications blocked — enable them in browser settings"
+      >
+        <BellOff className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  // Subscribed — clicking turns off
+  if (state === "subscribed") {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={unsubscribe}
+        disabled={busy}
+        title="Notifications on — click to disable"
+        className="text-yellow-400 hover:text-yellow-300"
+      >
+        <BellRing className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  // Unsubscribed — clicking turns on
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={subscribe}
+      disabled={busy}
+      title="Enable match prediction reminders"
+      className="text-muted-foreground hover:text-foreground"
+    >
+      <Bell className="h-4 w-4" />
+    </Button>
+  );
+}

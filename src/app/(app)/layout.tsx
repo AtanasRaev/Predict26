@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { SessionProvider } from "@/components/layout/SessionProvider";
-import { AutoRefresh } from "@/components/ui/AutoRefresh";
+import { LiveEvents } from "@/components/ui/LiveEvents";
 import { Trophy } from "lucide-react";
 
 export default async function AppLayout({
@@ -17,8 +17,8 @@ export default async function AppLayout({
 
   return (
     <SessionProvider>
-      {/* Silently re-fetches all server components every 30 s for live data */}
-      <AutoRefresh interval={30_000} />
+      {/* SSE listener — pushes router.refresh() whenever the server broadcasts */}
+      <LiveEvents />
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">

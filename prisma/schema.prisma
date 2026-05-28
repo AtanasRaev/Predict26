@@ -35,14 +35,15 @@ enum SyncStatus {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  username     String       @unique
-  firstName    String
-  lastName     String
-  passwordHash String
-  role         Role         @default(USER)
-  createdAt    DateTime     @default(now())
-  predictions  Prediction[]
+  id                String             @id @default(cuid())
+  username          String             @unique
+  firstName         String
+  lastName          String
+  passwordHash      String
+  role              Role               @default(USER)
+  createdAt         DateTime           @default(now())
+  predictions       Prediction[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Team {
@@ -70,8 +71,10 @@ model Match {
   homeScore       Int?
   awayScore       Int?
   winnerTeamId    String?
-  isKnockout      Boolean     @default(false)
-  lastSyncedAt    DateTime?
+  isKnockout               Boolean     @default(false)
+  lastSyncedAt             DateTime?
+  predictionOpenedSentAt   DateTime?   // push sent when predictions open (2 days before)
+  predictionReminderSentAt DateTime?   // push sent 1 h before lock (3 h before kickoff)
   homeTeam        Team        @relation("HomeTeam",   fields: [homeTeamId],   references: [id])
   awayTeam        Team        @relation("AwayTeam",   fields: [awayTeamId],   references: [id])
   winnerTeam      Team?       @relation("WinnerTeam", fields: [winnerTeamId], references: [id])
@@ -122,6 +125,18 @@ model Standing {
 
   @@unique([groupName, teamId])
   @@index([groupName])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model ApiSyncLog {

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { NotificationToggle } from "@/components/ui/NotificationToggle";
 import { cn } from "@/lib/utils";
 import { Trophy, Menu, X, Flag, Star, LayoutDashboard, ListOrdered, ShieldCheck } from "lucide-react";
 
@@ -72,8 +73,8 @@ export function Navbar() {
             )}
           </div>
 
-          {/* User info + sign out */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* User info + notifications + sign out */}
+          <div className="hidden md:flex items-center gap-2">
             {session && (
               <>
                 <div className="flex items-center gap-2">
@@ -82,6 +83,7 @@ export function Navbar() {
                   </div>
                   <span className="text-sm text-muted-foreground">{session.user.username}</span>
                 </div>
+                <NotificationToggle />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -146,14 +148,17 @@ export function Navbar() {
               </div>
               <span className="text-sm text-muted-foreground">{session?.user.username}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Sign out
-            </Button>
+            <div className="flex items-center gap-1">
+              <NotificationToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Sign out
+              </Button>
+            </div>
           </div>
         </div>
       )}

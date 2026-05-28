@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, handleAdminError } from "@/lib/utils/adminGuard";
 import { prisma } from "@/lib/prisma";
+import { broadcast } from "@/lib/events/broadcaster";
 
 /**
  * DELETE /api/admin/clear-data
@@ -19,6 +20,8 @@ export async function DELETE() {
       prisma.match.deleteMany(),
       prisma.team.deleteMany(),
     ]);
+
+    broadcast("refresh", { reason: "clear-data" });
 
     return NextResponse.json({
       ok: true,
