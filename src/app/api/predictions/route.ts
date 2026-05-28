@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPredictionLockTime } from "@/lib/constants";
-import { isMatchToday } from "@/lib/utils/predictionVisibility";
+import { isMatchWithinPredictionWindow } from "@/lib/utils/predictionVisibility";
 import { z } from "zod";
 
 const predictionSchema = z.object({
@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
 
-  // Server-side: only allow predictions for today's matches
-  if (!isMatchToday(match.utcDate)) {
+  // Server-side: only allow predictions within the prediction window
+  if (!isMatchWithinPredictionWindow(match.utcDate)) {
     return NextResponse.json(
-      { error: "Predictions are only open on match day" },
+      { error: "Predictions are not open yet for this match" },
       { status: 403 }
     );
   }
