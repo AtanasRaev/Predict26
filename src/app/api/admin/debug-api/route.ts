@@ -22,10 +22,10 @@ export async function GET() {
     }
 
     const results = await Promise.all([
+      probe("/competitions/BSA/matches?season=2026", apiKey),
+      probe("/competitions/BSA/matches?season=2025", apiKey),
+      probe("/competitions/BSA", apiKey),
       probe("/competitions/WC/matches?season=2026", apiKey),
-      probe("/competitions/WC/matches?season=2025", apiKey),
-      probe("/competitions/WC/matches", apiKey),
-      probe("/competitions/WC", apiKey),
     ]);
 
     return NextResponse.json({ apiKeyPrefix: apiKey.slice(0, 6) + "...", results });
