@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { SessionProvider } from "@/components/layout/SessionProvider";
 import { LiveEvents } from "@/components/ui/LiveEvents";
-import { Trophy } from "lucide-react";
+import Image from "next/image";
 
 export default async function AppLayout({
   children,
@@ -17,17 +17,18 @@ export default async function AppLayout({
 
   return (
     <SessionProvider>
-      {/* SSE listener — pushes router.refresh() whenever the server broadcasts */}
       <LiveEvents />
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
-          {children}
+        <main className="flex-1 w-full">
+          <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+            {children}
+          </div>
         </main>
-        <footer className="border-t bg-card/50 py-4">
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Trophy className="h-3 w-3 text-yellow-400/70" />
-            <span>World Cup 2026 · Data from football-data.org</span>
+        <footer className="border-t border-white/10 bg-card/70 py-5 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 text-xs text-muted-foreground sm:px-6 lg:px-8">
+            <Image src="/logo.png" alt="" width={14} height={14} />
+            <span>World Cup 2026 - Data from football-data.org</span>
           </div>
         </footer>
       </div>

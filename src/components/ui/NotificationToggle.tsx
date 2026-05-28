@@ -29,6 +29,13 @@ export function NotificationToggle() {
   const [tooltip, setTooltip] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    const updateState = (next: NotifState) => {
+      window.setTimeout(() => {
+        if (!cancelled) setState(next);
+      }, 0);
+    };
+
     // iOS Safari requires the app to be installed as a PWA (Add to Home Screen)
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
@@ -37,22 +44,32 @@ export function NotificationToggle() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setState(isIOS && !isStandalone ? "ios-hint" : "unsupported");
-      return;
+      updateState(isIOS && !isStandalone ? "ios-hint" : "unsupported");
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (Notification.permission === "denied") {
-      setState("denied");
-      return;
+      updateState("denied");
+      return () => {
+        cancelled = true;
+      };
     }
 
     // Check if there's already an active subscription in the push manager
     navigator.serviceWorker.ready
       .then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
-        setState(sub ? "subscribed" : "unsubscribed");
+        if (!cancelled) setState(sub ? "subscribed" : "unsubscribed");
       })
-      .catch(() => setState("unsubscribed"));
+      .catch(() => {
+        if (!cancelled) setState("unsubscribed");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const subscribe = async () => {

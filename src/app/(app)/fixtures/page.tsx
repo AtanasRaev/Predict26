@@ -13,8 +13,6 @@ function parseFilter(raw?: string): FilterValue {
   return "all";
 }
 
-// ─── Date helpers ────────────────────────────────────────────────────────────
-
 const TZ = "America/New_York";
 
 const bostonDateFmt = new Intl.DateTimeFormat("en-CA", {
@@ -25,15 +23,13 @@ const bostonDateFmt = new Intl.DateTimeFormat("en-CA", {
 });
 
 function bostonDateKey(date: Date): string {
-  return bostonDateFmt.format(new Date(date)); // "YYYY-MM-DD"
+  return bostonDateFmt.format(new Date(date));
 }
 
 function formatDateHeader(dateKey: string): string {
   const todayKey = bostonDateKey(new Date());
-
   const [y, m, d] = dateKey.split("-").map(Number);
-  // Use noon UTC on that date so the weekday formatting is stable across timezones
-  const displayDate = new Date(Date.UTC(y, m - 1, d, 16, 0, 0)); // 16:00 UTC ≈ noon ET
+  const displayDate = new Date(Date.UTC(y, m - 1, d, 16, 0, 0));
 
   const tomorrowDate = new Date();
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);
@@ -47,12 +43,10 @@ function formatDateHeader(dateKey: string): string {
     year: "numeric",
   }).format(displayDate);
 
-  if (dateKey === todayKey) return `Today  ·  ${long}`;
-  if (dateKey === tomorrowKey) return `Tomorrow  ·  ${long}`;
+  if (dateKey === todayKey) return `Today - ${long}`;
+  if (dateKey === tomorrowKey) return `Tomorrow - ${long}`;
   return long;
 }
-
-// ─── Group matches by Boston calendar date ───────────────────────────────────
 
 function groupByDate<T extends { utcDate: Date }>(
   matches: T[],
@@ -64,13 +58,10 @@ function groupByDate<T extends { utcDate: Date }>(
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(match);
   }
-  const sorted = Array.from(grouped.entries()).sort(([a], [b]) =>
+  return Array.from(grouped.entries()).sort(([a], [b]) =>
     newestFirst ? b.localeCompare(a) : a.localeCompare(b)
   );
-  return sorted;
 }
-
-// ─── DB query ────────────────────────────────────────────────────────────────
 
 async function getAllMatches(userId: string) {
   return prisma.match.findMany({
@@ -99,8 +90,6 @@ const EMPTY_MESSAGES: Record<FilterValue, string> = {
   past: "No finished matches yet.",
 };
 
-// ─── Page ────────────────────────────────────────────────────────────────────
-
 export default async function FixturesPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session) return null;
@@ -111,9 +100,9 @@ export default async function FixturesPage({ searchParams }: PageProps) {
   const all = await getAllMatches(session.user.id);
   const now = new Date();
 
-  const today    = all.filter((m) => isMatchToday(m.utcDate));
+  const today = all.filter((m) => isMatchToday(m.utcDate));
   const upcoming = all.filter((m) => m.status === "SCHEDULED" && new Date(m.utcDate) > now);
-  const past     = all.filter((m) => m.status === "FINISHED");
+  const past = all.filter((m) => m.status === "FINISHED");
 
   const counts: Partial<Record<FilterValue, number>> = {
     all: all.length,
@@ -130,36 +119,41 @@ export default async function FixturesPage({ searchParams }: PageProps) {
   };
 
   const matches = matchesForFilter[filter];
-  const newestFirst = filter === "past";
-  const grouped = groupByDate(matches, newestFirst);
+  const grouped = groupByDate(matches, filter === "past");
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold">Fixtures</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+            Match center
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">Fixtures</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse every match and lock predictions before kickoff.
+          </p>
+        </div>
         <FixtureFilters current={filter} counts={counts} />
       </div>
 
       {matches.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12 border rounded-lg">
+        <p className="rounded-2xl border border-white/10 bg-card/75 py-12 text-center text-muted-foreground">
           {EMPTY_MESSAGES[filter]}
         </p>
       ) : (
         <div className="space-y-8">
           {grouped.map(([dateKey, dayMatches]) => (
             <section key={dateKey}>
-              {/* Date header */}
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-sm font-semibold text-foreground whitespace-nowrap">
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="whitespace-nowrap text-sm font-black text-foreground">
                   {formatDateHeader(dateKey)}
                 </h2>
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
                   {dayMatches.length} match{dayMatches.length !== 1 ? "es" : ""}
                 </span>
               </div>
 
-              {/* Match cards for this day */}
               <div className="space-y-3">
                 {dayMatches.map((match) => {
                   const userPrediction = match.predictions[0] ?? null;

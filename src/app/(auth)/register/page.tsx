@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -67,7 +67,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // Auto-login after registration
     const result = await signIn("credentials", {
       username: form.username,
       password: form.password,
@@ -86,29 +85,28 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm overflow-hidden shadow-2xl shadow-black/40">
-      {/* Gradient accent bar */}
-      <div className="h-1 bg-gradient-to-r from-primary via-blue-400 to-yellow-400" />
+    <Card className="w-full max-w-md overflow-hidden border-white/10 bg-card/88 shadow-2xl shadow-black/40 backdrop-blur">
+      <div className="h-1 bg-gradient-to-r from-primary via-emerald-400 to-accent" />
 
-      <CardHeader className="text-center pt-6 pb-4">
-        <div className="flex justify-center mb-3">
-          <div className="p-3 rounded-full bg-yellow-400/15 ring-1 ring-yellow-400/30">
-            <Trophy className="h-7 w-7 text-yellow-400" />
+      <CardHeader className="px-6 pb-4 pt-7 text-center">
+        <div className="mb-3 flex justify-center">
+          <div className="rounded-2xl bg-accent/15 p-3 ring-1 ring-accent/30">
+            <Image src="/logo.png" alt="Predict26" width={28} height={28} />
           </div>
         </div>
-        <CardTitle className="text-xl font-bold">Create Account</CardTitle>
-        <CardDescription className="text-sm">Join and compete with friends</CardDescription>
+        <CardTitle className="text-2xl font-black">Create account</CardTitle>
+        <CardDescription>Join and compete with friends</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-3 px-6">
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2 border border-destructive/20">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input
                 id="firstName"
@@ -117,7 +115,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="lastName">Last name</Label>
               <Input
                 id="lastName"
@@ -127,7 +125,7 @@ export default function RegisterPage() {
               />
             </div>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
@@ -139,7 +137,7 @@ export default function RegisterPage() {
               autoComplete="username"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -150,7 +148,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
             <Input
               id="confirmPassword"
@@ -162,13 +160,13 @@ export default function RegisterPage() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 px-6 pb-6">
+        <CardFooter className="flex flex-col gap-5 px-6 pb-7 pt-2">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account…" : "Create account"}
+            {loading ? "Creating account..." : "Create account"}
           </Button>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-center text-sm leading-6 text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="underline hover:text-foreground transition-colors">
+            <Link href="/login" className="font-semibold text-primary underline-offset-4 transition-colors hover:text-foreground hover:underline">
               Sign in
             </Link>
           </p>

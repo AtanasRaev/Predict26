@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle, CheckCircle2, Clock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TeamCrest } from "@/components/ui/TeamCrest";
 import { getPredictionLockTime } from "@/lib/constants";
 
 interface Team {
@@ -26,23 +28,31 @@ interface PredictionFormProps {
 }
 
 function useCountdown(lockTime: Date) {
-  const [timeLeft, setTimeLeft] = useState<number>(
-    lockTime.getTime() - Date.now()
-  );
+  const [timeLeft, setTimeLeft] = useState<number>(Number.POSITIVE_INFINITY);
 
   useEffect(() => {
+    const update = () => {
+      const remaining = lockTime.getTime() - Date.now();
+      setTimeLeft(remaining);
+      if (remaining <= 0) clearInterval(interval);
+    };
+    const timeout = window.setTimeout(update, 0);
     const interval = setInterval(() => {
       const remaining = lockTime.getTime() - Date.now();
       setTimeLeft(remaining);
       if (remaining <= 0) clearInterval(interval);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [lockTime]);
 
   return timeLeft;
 }
 
 function formatCountdown(ms: number): string {
+  if (!Number.isFinite(ms)) return "Calculating";
   if (ms <= 0) return "Locked";
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -55,6 +65,16 @@ function formatCountdown(ms: number): string {
   if (hours > 0) return `${hours}h ${minutes}m`;
   if (minutes > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
+}
+
+function TeamLabel({ team, align = "left" }: { team: Team; align?: "left" | "right" }) {
+  return (
+    <div className={`flex min-w-0 items-center gap-2 ${align === "right" ? "justify-end text-right" : ""}`}>
+      {align === "left" && <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="sm" />}
+      <span className="truncate text-sm font-bold">{team.shortName}</span>
+      {align === "right" && <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="sm" />}
+    </div>
+  );
 }
 
 export function PredictionForm({
@@ -112,70 +132,92 @@ export function PredictionForm({
         } else {
           setSaved(true);
           onSaved?.();
-          // Immediately re-fetch all server components so the predictions list
-          // (and leaderboard, fixtures, etc.) shows the updated data right away.
           router.refresh();
           setTimeout(() => setSaved(false), 3000);
         }
       } catch {
-        setError("Network error — please try again");
+        setError("Network error - please try again");
       } finally {
         setSaving(false);
       }
     },
-    [isLocked, homeGoals, awayGoals, matchId, onSaved]
+    [isLocked, homeGoals, awayGoals, matchId, onSaved, router]
   );
 
   if (isLocked) {
     return (
-      <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground text-center">
-        🔒 Predictions are locked for this match.
+      <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm font-medium text-muted-foreground">
+        <Lock className="h-4 w-4" />
+        Predictions are locked for this match.
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 text-right text-sm font-medium">{homeTeam.shortName}</div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <TeamLabel team={homeTeam} />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-background/70 p-2">
+          <label className="sr-only" htmlFor={`home-score-${matchId}`}>
+            {homeTeam.name} goals
+          </label>
           <Input
+            id={`home-score-${matchId}`}
             type="number"
+            inputMode="numeric"
             min={0}
             max={30}
             value={homeGoals}
             onChange={(e) => setHomeGoals(e.target.value)}
-            className="w-16 text-center text-lg font-bold"
+            className="h-12 w-14 rounded-xl text-center text-xl font-black sm:w-16"
             placeholder="0"
             disabled={isLocked}
+            aria-invalid={!!error}
           />
-          <span className="text-muted-foreground font-medium">—</span>
+          <span className="text-lg font-black text-muted-foreground">-</span>
+          <label className="sr-only" htmlFor={`away-score-${matchId}`}>
+            {awayTeam.name} goals
+          </label>
           <Input
+            id={`away-score-${matchId}`}
             type="number"
+            inputMode="numeric"
             min={0}
             max={30}
             value={awayGoals}
             onChange={(e) => setAwayGoals(e.target.value)}
-            className="w-16 text-center text-lg font-bold"
+            className="h-12 w-14 rounded-xl text-center text-xl font-black sm:w-16"
             placeholder="0"
             disabled={isLocked}
+            aria-invalid={!!error}
           />
         </div>
 
-        <div className="flex-1 text-sm font-medium">{awayTeam.shortName}</div>
+        <TeamLabel team={awayTeam} align="right" />
       </div>
 
       {error && (
-        <p className="text-sm text-destructive">{error}</p>
+        <p className="flex items-center gap-2 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </p>
       )}
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          Locks in: <span className="font-medium">{formatCountdown(timeLeft)}</span>
+      {saved && (
+        <p className="flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">
+          <CheckCircle2 className="h-4 w-4" />
+          Prediction saved.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          Locks in {formatCountdown(timeLeft)}
         </span>
-        <Button type="submit" size="sm" disabled={saving || isLocked}>
-          {saving ? "Saving…" : saved ? "✓ Saved!" : existingPrediction ? "Update prediction" : "Save prediction"}
+        <Button type="submit" className="w-full sm:w-auto" disabled={saving || isLocked}>
+          {saving ? "Saving..." : existingPrediction ? "Update prediction" : "Save prediction"}
         </Button>
       </div>
     </form>

@@ -18,25 +18,25 @@ export function FixtureFilters({
   counts?: Partial<Record<FilterValue, number>>;
 }) {
   return (
-    <div className="flex gap-1 p-1 bg-muted/40 rounded-lg">
+    <div className="flex w-full gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.035] p-1 sm:w-auto">
       {FILTERS.map(({ value, label }) => (
         <Link
           key={value}
           href={value === "all" ? "/fixtures" : `/fixtures?filter=${value}`}
           className={cn(
-            "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+            "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold transition-colors",
             current === value
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
           )}
         >
           {label}
           {counts?.[value] !== undefined && (
             <span className={cn(
-              "text-xs rounded-full px-1.5 py-0.5 leading-none",
+              "rounded-full px-1.5 py-0.5 text-xs leading-none",
               current === value
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground"
+                ? "bg-white/18 text-primary-foreground"
+                : "bg-white/[0.06] text-muted-foreground"
             )}>
               {counts[value]}
             </span>

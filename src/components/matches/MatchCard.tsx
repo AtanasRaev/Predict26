@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarClock, CheckCircle2, Lock, Radio, UsersRound } from "lucide-react";
 import { TeamCrest } from "@/components/ui/TeamCrest";
 import { cn } from "@/lib/utils";
 
@@ -44,16 +45,16 @@ function formatDate(date: Date) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    SCHEDULED: "bg-muted text-muted-foreground",
-    LIVE: "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
-    FINISHED: "bg-secondary text-secondary-foreground",
-    POSTPONED: "bg-yellow-500/15 text-yellow-500",
-    CANCELLED: "bg-destructive/15 text-destructive",
+    SCHEDULED: "border-white/10 bg-white/[0.055] text-muted-foreground",
+    LIVE: "border-emerald-400/30 bg-emerald-400/15 text-emerald-300",
+    FINISHED: "border-primary/20 bg-primary/12 text-primary",
+    POSTPONED: "border-amber-400/30 bg-amber-400/15 text-amber-300",
+    CANCELLED: "border-destructive/30 bg-destructive/15 text-destructive",
   };
 
   const labels: Record<string, string> = {
     SCHEDULED: "Upcoming",
-    LIVE: "🔴 Live",
+    LIVE: "Live",
     FINISHED: "Finished",
     POSTPONED: "Postponed",
     CANCELLED: "Cancelled",
@@ -62,10 +63,11 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "text-xs font-medium px-2 py-0.5 rounded-full",
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold",
         styles[status] ?? styles.SCHEDULED
       )}
     >
+      {status === "LIVE" && <Radio className="h-3 w-3" />}
       {labels[status] ?? status}
     </span>
   );
@@ -78,31 +80,53 @@ function PredictionBadge({
 }) {
   if (!status) return null;
 
-  if (status === "predicted") {
-    return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20">
-        ✓ Predicted
-      </span>
-    );
-  }
-  if (status === "not_predicted") {
-    return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20">
-        Predict now
-      </span>
-    );
-  }
-  if (status === "not_open") {
-    return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-        Not open yet
-      </span>
-    );
-  }
+  const config = {
+    predicted: {
+      label: "Saved",
+      icon: CheckCircle2,
+      className: "border-emerald-400/30 bg-emerald-400/15 text-emerald-300",
+    },
+    not_predicted: {
+      label: "Predict",
+      icon: CalendarClock,
+      className: "border-accent/35 bg-accent/15 text-accent",
+    },
+    not_open: {
+      label: "Opens soon",
+      icon: CalendarClock,
+      className: "border-white/10 bg-white/[0.055] text-muted-foreground",
+    },
+    locked: {
+      label: "Locked",
+      icon: Lock,
+      className: "border-white/10 bg-white/[0.055] text-muted-foreground",
+    },
+  }[status];
+
+  const Icon = config.icon;
   return (
-    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-      🔒 Locked
+    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold", config.className)}>
+      <Icon className="h-3 w-3" />
+      {config.label}
     </span>
+  );
+}
+
+function TeamBlock({ team, align = "left" }: { team: Team; align?: "left" | "right" }) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-1 items-center gap-3",
+        align === "right" && "justify-end"
+      )}
+    >
+      {align === "left" && <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="md" />}
+      <div className={cn("min-w-0", align === "right" && "text-right")}>
+        <div className="truncate text-sm font-black sm:text-base">{team.shortName}</div>
+        <div className="hidden truncate text-xs text-muted-foreground sm:block">{team.name}</div>
+      </div>
+      {align === "right" && <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="md" />}
+    </div>
   );
 }
 
@@ -130,60 +154,54 @@ export function MatchCard({
     <Link
       href={`/match/${id}`}
       className={cn(
-        "block border rounded-lg p-4 transition-all hover:border-primary/30 hover:bg-muted/30",
-        isLive && "border-emerald-500/40 bg-emerald-500/5"
+        "group block rounded-2xl border border-white/10 bg-card/88 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-xl hover:shadow-black/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isLive && "border-emerald-400/35 bg-emerald-400/8"
       )}
     >
-      {/* Stage + badges row */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground">{stageLabel}</span>
-        <div className="flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            {stageLabel}
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarClock className="h-3.5 w-3.5" />
+            {formatDate(utcDate)} ET
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <StatusBadge status={status} />
           <PredictionBadge status={predictionStatus} />
         </div>
       </div>
 
-      {/* Teams + score */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Home team */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <TeamCrest crestUrl={homeTeam.crestUrl} teamName={homeTeam.name} size="md" />
-          <span className="font-semibold text-sm truncate">{homeTeam.shortName}</span>
-        </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <TeamBlock team={homeTeam} />
 
-        {/* Score / time */}
-        <div className="text-center shrink-0 min-w-[90px]">
+        <div className="min-w-[82px] rounded-2xl border border-white/10 bg-background/70 px-3 py-2 text-center">
           {(isFinished || isLive) && homeScore !== null && awayScore !== null ? (
-            <div className={cn("text-2xl font-bold tabular-nums", isLive && "text-emerald-400")}>
-              {homeScore} — {awayScore}
+            <div className={cn("text-2xl font-black tabular-nums", isLive && "text-emerald-300")}>
+              {homeScore}-{awayScore}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground font-medium">
-              {formatDate(utcDate)}
+            <div className="text-lg font-black uppercase tracking-[0.18em] text-muted-foreground">
+              vs
             </div>
           )}
-          {/* User prediction */}
           {userPrediction && (
-            <div className="text-xs text-muted-foreground mt-1">
-              You: {userPrediction.predictedHomeGoals}–{userPrediction.predictedAwayGoals}
+            <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
+              You {userPrediction.predictedHomeGoals}-{userPrediction.predictedAwayGoals}
               {userPrediction.points !== null && userPrediction.points !== undefined && (
-                <span className="ml-1 font-semibold text-primary">
-                  ({userPrediction.points}pt{userPrediction.points !== 1 ? "s" : ""})
-                </span>
+                <span className="ml-1 text-primary">+{userPrediction.points}</span>
               )}
             </div>
           )}
         </div>
 
-        {/* Away team */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
-          <span className="font-semibold text-sm truncate">{awayTeam.shortName}</span>
-          <TeamCrest crestUrl={awayTeam.crestUrl} teamName={awayTeam.name} size="md" />
-        </div>
+        <TeamBlock team={awayTeam} align="right" />
       </div>
 
-      {/* Prediction count */}
-      <div className="mt-3 text-xs text-muted-foreground/60 text-right">
+      <div className="mt-4 flex items-center justify-end gap-1.5 text-xs font-medium text-muted-foreground">
+        <UsersRound className="h-3.5 w-3.5" />
         {predictionCount} prediction{predictionCount !== 1 ? "s" : ""}
       </div>
     </Link>

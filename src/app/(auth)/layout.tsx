@@ -4,10 +4,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
-      {/* Subtle decorative glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.60_0.20_255_/_12%),transparent)] pointer-events-none" />
-      <div className="relative z-10 w-full flex items-center justify-center">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+      <div className="absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,oklch(0.22_0.06_248),transparent)]" />
+      <div className="absolute inset-x-6 bottom-6 top-20 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_oklch,var(--primary)_24%,transparent),transparent_38%)]" />
+      <div className="relative z-10 flex w-full items-center justify-center">
         {children}
       </div>
     </div>

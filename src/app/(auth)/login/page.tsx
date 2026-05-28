@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,28 +46,27 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm overflow-hidden shadow-2xl shadow-black/40">
-      {/* Gradient accent bar */}
-      <div className="h-1 bg-gradient-to-r from-primary via-blue-400 to-yellow-400" />
+    <Card className="w-full max-w-md overflow-hidden border-white/10 bg-card/88 shadow-2xl shadow-black/40 backdrop-blur">
+      <div className="h-1 bg-gradient-to-r from-primary via-emerald-400 to-accent" />
 
-      <CardHeader className="text-center pt-6 pb-4">
+      <CardHeader className="px-6 pb-4 pt-7 text-center">
         <div className="flex justify-center mb-3">
-          <div className="p-3 rounded-full bg-yellow-400/15 ring-1 ring-yellow-400/30">
-            <Trophy className="h-7 w-7 text-yellow-400" />
+          <div className="rounded-2xl bg-accent/15 p-3 ring-1 ring-accent/30">
+            <Image src="/logo.png" alt="Predict26" width={28} height={28} />
           </div>
         </div>
-        <CardTitle className="text-xl font-bold">Sign In</CardTitle>
-        <CardDescription className="text-sm">Welcome back to the predictions game</CardDescription>
+        <CardTitle className="text-2xl font-black">Sign in</CardTitle>
+        <CardDescription>Welcome back to the predictions game</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4 px-6">
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2 border border-destructive/20">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </div>
           )}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
@@ -79,7 +78,7 @@ export default function LoginPage() {
               autoComplete="username"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -91,13 +90,13 @@ export default function LoginPage() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 px-6 pb-6">
+        <CardFooter className="flex flex-col gap-5 px-6 pb-7 pt-2">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-center text-sm leading-6 text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="underline hover:text-foreground transition-colors">
+            <Link href="/register" className="font-semibold text-primary underline-offset-4 transition-colors hover:text-foreground hover:underline">
               Register
             </Link>
           </p>

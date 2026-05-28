@@ -9,18 +9,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Predict26 — World Cup 2026 Predictions",
+  title: "Predict26 - World Cup 2026 Predictions",
   description: "Predict World Cup 2026 match scores and compete with friends",
   manifest: "/manifest.json",
-  // iOS PWA support
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Predict26",
-  },
-  icons: {
-    // Standard favicon + Apple touch icon (add icon-192.png to /public)
-    apple: "/icon-192.png",
   },
 };
 

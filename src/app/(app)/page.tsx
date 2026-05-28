@@ -5,7 +5,7 @@ import { MatchCard } from "@/components/matches/MatchCard";
 import { getLeaderboard } from "@/lib/queries/leaderboard";
 import { getMissingPredictionCount } from "@/lib/queries/matches";
 import { getPredictionStatus } from "@/lib/utils/predictionVisibility";
-import { Trophy, AlertTriangle, Target, Star, BarChart3 } from "lucide-react";
+import { Trophy, AlertTriangle, Target, Star, BarChart3, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -53,100 +53,80 @@ export default async function DashboardPage() {
   const top5 = leaderboard.slice(0, 5);
 
   const stats = [
-    {
-      label: "My Rank",
-      value: myRank ? `#${myRank}` : "—",
-      icon: Trophy,
-      iconColor: "text-yellow-400",
-      valueColor: "text-yellow-400",
-      borderColor: "border-l-yellow-400",
-      bg: "bg-yellow-400/5",
-    },
-    {
-      label: "Total Points",
-      value: myStats._sum.points ?? 0,
-      icon: Star,
-      iconColor: "text-blue-400",
-      valueColor: "text-blue-400",
-      borderColor: "border-l-blue-400",
-      bg: "bg-blue-400/5",
-    },
-    {
-      label: "Exact Scores",
-      value: exactCount,
-      icon: Target,
-      iconColor: "text-emerald-400",
-      valueColor: "text-emerald-400",
-      borderColor: "border-l-emerald-400",
-      bg: "bg-emerald-400/5",
-    },
-    {
-      label: "Predictions",
-      value: myStats._count.id,
-      icon: BarChart3,
-      iconColor: "text-violet-400",
-      valueColor: "text-violet-400",
-      borderColor: "border-l-violet-400",
-      bg: "bg-violet-400/5",
-    },
+    { label: "My Rank", value: myRank ? `#${myRank}` : "-", icon: Trophy, tone: "text-accent", border: "border-accent/30", bg: "bg-accent/8" },
+    { label: "Total Points", value: myStats._sum.points ?? 0, icon: Star, tone: "text-primary", border: "border-primary/30", bg: "bg-primary/8" },
+    { label: "Exact Scores", value: exactCount, icon: Target, tone: "text-emerald-300", border: "border-emerald-400/30", bg: "bg-emerald-400/8" },
+    { label: "Predictions", value: myStats._count.id, icon: BarChart3, tone: "text-violet-300", border: "border-violet-400/30", bg: "bg-violet-400/8" },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome header */}
-      <div>
-        <h1 className="text-2xl font-bold">
-          Welcome back, {session.user.username} 👋
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          World Cup 2026 Predictions
-        </p>
+    <div className="space-y-7">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-card/82 p-5 shadow-2xl shadow-black/15 sm:p-7">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+              World Cup 2026 Predictions
+            </p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+              Welcome back, {session.user.username}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              Make your calls before kickoff, climb the table, and chase perfect scores.
+            </p>
+          </div>
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/fixtures">
+              Predict matches
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Missing predictions alert */}
       {missingCount > 0 && (
-        <Alert className="border-orange-400/30 bg-orange-400/5">
-          <AlertTriangle className="h-4 w-4 text-orange-400" />
-          <AlertDescription className="flex items-center justify-between">
+        <Alert className="border-accent/30 bg-accent/10">
+          <AlertTriangle className="h-4 w-4 text-accent" />
+          <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>
               You have <strong>{missingCount}</strong> upcoming{" "}
               {missingCount === 1 ? "match" : "matches"} without a prediction today.
             </span>
-            <Button asChild size="sm" variant="outline" className="ml-3 shrink-0 border-orange-400/30 text-orange-400 hover:bg-orange-400/10">
+            <Button asChild size="sm" variant="outline" className="shrink-0 border-accent/30 text-accent hover:bg-accent/10">
               <Link href="/fixtures">Predict now</Link>
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {stats.map(({ label, value, icon: Icon, iconColor, valueColor, borderColor, bg }) => (
-          <div
-            key={label}
-            className={`border border-l-4 ${borderColor} rounded-lg p-4 ${bg} bg-card flex flex-col items-center gap-1`}
-          >
-            <Icon className={`h-4 w-4 ${iconColor} mb-0.5`} />
-            <div className={`text-2xl font-bold tabular-nums ${valueColor}`}>{value}</div>
-            <div className="text-xs text-muted-foreground text-center leading-tight">{label}</div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map(({ label, value, icon: Icon, tone, border, bg }) => (
+          <div key={label} className={`rounded-2xl border ${border} ${bg} bg-card/85 p-4 shadow-sm`}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className={`text-2xl font-black tabular-nums ${tone}`}>{value}</div>
+                <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {label}
+                </div>
+              </div>
+              <Icon className={`h-5 w-5 ${tone}`} />
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Upcoming matches */}
+      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <span className="w-1 h-4 rounded-full bg-primary inline-block" />
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-black">
+              <span className="inline-block h-5 w-1 rounded-full bg-primary" />
               Upcoming Matches
             </h2>
-            <Link href="/fixtures" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors">
+            <Link href="/fixtures" className="text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground">
               View all
             </Link>
           </div>
           {upcoming.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-6 text-center border rounded-lg">
+            <p className="rounded-2xl border border-white/10 bg-card/75 py-10 text-center text-sm text-muted-foreground">
               No upcoming matches
             </p>
           ) : (
@@ -177,56 +157,41 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        {/* Top 5 leaderboard */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <span className="w-1 h-4 rounded-full bg-yellow-400 inline-block" />
-              Top 5
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-black">
+              <span className="inline-block h-5 w-1 rounded-full bg-accent" />
+              Top Players
             </h2>
-            <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors">
+            <Link href="/leaderboard" className="text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground">
               Full leaderboard
             </Link>
           </div>
-          <div className="border rounded-lg bg-card overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-card/85 shadow-sm">
             {top5.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-6 text-center">
-                No scores yet
-              </p>
+              <p className="py-10 text-center text-sm text-muted-foreground">No scores yet</p>
             ) : (
               <table className="w-full text-sm">
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-white/10">
                   {top5.map((entry) => {
                     const isCurrentUser = entry.userId === session.user.id;
-                    const medal =
-                      entry.rank === 1
-                        ? "🥇"
-                        : entry.rank === 2
-                        ? "🥈"
-                        : entry.rank === 3
-                        ? "🥉"
-                        : entry.rank;
                     return (
                       <tr
                         key={entry.userId}
-                        className={
-                          isCurrentUser
-                            ? "bg-primary/8 font-semibold"
-                            : entry.rank <= 3
-                            ? "hover:bg-muted/30"
-                            : "hover:bg-muted/20"
-                        }
+                        className={isCurrentUser ? "bg-primary/10 font-semibold" : "hover:bg-white/[0.035]"}
                       >
-                        <td className="px-4 py-2.5 w-10 text-center text-base">{medal}</td>
-                        <td className="py-2.5">
+                        <td className="w-12 px-4 py-3 text-center">
+                          <span className="inline-grid h-7 w-7 place-items-center rounded-full bg-white/[0.06] text-xs font-black text-accent">
+                            {entry.rank}
+                          </span>
+                        </td>
+                        <td className="py-3">
                           {entry.username}
                           {isCurrentUser && (
-                            <span className="ml-1 text-xs text-muted-foreground font-normal">
-                              (you)
-                            </span>
+                            <span className="ml-1 text-xs font-normal text-muted-foreground">(you)</span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5 text-right font-bold text-primary">
+                        <td className="px-4 py-3 text-right font-black text-primary">
                           {entry.totalPoints} pts
                         </td>
                       </tr>

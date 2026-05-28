@@ -100,7 +100,8 @@ export async function sendPredictionOpenedNotifications(): Promise<NotifyResult>
   let totalPruned = 0;
   const activeSubs = [...subscriptions];
 
-  for (const match of matches) {
+  if (matches.length === 1) {
+    const match = matches[0];
     const lockStr = formatLockTime(match.utcDate);
 
     const { sent, prunedExpired } = await fanOut(
@@ -118,6 +119,28 @@ export async function sendPredictionOpenedNotifications(): Promise<NotifyResult>
 
     await prisma.match.update({
       where: { id: match.id },
+      data: { predictionOpenedSentAt: new Date() },
+    });
+  } else {
+    const matchList = matches
+      .map((m) => `${m.homeTeam.shortName} vs ${m.awayTeam.shortName}`)
+      .join(", ");
+
+    const { sent, prunedExpired } = await fanOut(
+      subscriptions,
+      {
+        title: `🔓 ${matches.length} matches are open for predictions!`,
+        body: matchList,
+        url: `/predictions`,
+      },
+      activeSubs
+    );
+
+    totalSent += sent;
+    totalPruned += prunedExpired;
+
+    await prisma.match.updateMany({
+      where: { id: { in: matches.map((m) => m.id) } },
       data: { predictionOpenedSentAt: new Date() },
     });
   }
@@ -159,7 +182,9 @@ export async function sendPredictionReminders(): Promise<NotifyResult> {
   let totalPruned = 0;
   const activeSubs = [...subscriptions];
 
-  for (const match of matches) {
+  if (matches.length === 1) {
+    const match = matches[0];
+
     const { sent, prunedExpired } = await fanOut(
       subscriptions,
       {
@@ -175,6 +200,28 @@ export async function sendPredictionReminders(): Promise<NotifyResult> {
 
     await prisma.match.update({
       where: { id: match.id },
+      data: { predictionReminderSentAt: new Date() },
+    });
+  } else {
+    const matchList = matches
+      .map((m) => `${m.homeTeam.shortName} vs ${m.awayTeam.shortName}`)
+      .join(", ");
+
+    const { sent, prunedExpired } = await fanOut(
+      subscriptions,
+      {
+        title: `⏰ Last hour! ${matches.length} matches closing soon`,
+        body: matchList,
+        url: `/predictions`,
+      },
+      activeSubs
+    );
+
+    totalSent += sent;
+    totalPruned += prunedExpired;
+
+    await prisma.match.updateMany({
+      where: { id: { in: matches.map((m) => m.id) } },
       data: { predictionReminderSentAt: new Date() },
     });
   }
