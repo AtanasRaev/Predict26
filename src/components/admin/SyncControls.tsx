@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 
 interface SyncLog {
   id: string;
@@ -84,6 +84,29 @@ export function SyncControls({ initialLogs }: SyncControlsProps) {
     }
   }
 
+  async function triggerClearData() {
+    if (!confirm("⚠️ This will delete ALL matches, teams, standings, and predictions. Are you sure?")) return;
+    setLoading((l) => ({ ...l, clearData: true }));
+    setResults((r) => ({ ...r, clearData: "" }));
+    try {
+      const res = await fetch("/api/admin/clear-data", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        const d = data.deleted;
+        setResults((r) => ({
+          ...r,
+          clearData: `✓ Deleted: ${d.matches} matches, ${d.teams} teams, ${d.predictions} predictions, ${d.standings} standings`,
+        }));
+      } else {
+        setResults((r) => ({ ...r, clearData: `Error: ${data.error}` }));
+      }
+    } catch {
+      setResults((r) => ({ ...r, clearData: "Network error" }));
+    } finally {
+      setLoading((l) => ({ ...l, clearData: false }));
+    }
+  }
+
   const controls: {
     key: string;
     label: string;
@@ -117,36 +140,69 @@ export function SyncControls({ initialLogs }: SyncControlsProps) {
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {controls.map(({ key, label, desc, action }) => (
-        <div key={key} className="border rounded-lg p-4 bg-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium text-sm">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-              {results[key] && (
-                <p className={`text-xs mt-1 ${results[key].startsWith("✓") ? "text-green-600" : "text-destructive"}`}>
-                  {results[key]}
-                </p>
-              )}
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {controls.map(({ key, label, desc, action }) => (
+          <div key={key} className="border rounded-lg p-4 bg-card">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-sm">{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                {results[key] && (
+                  <p className={`text-xs mt-1 ${results[key].startsWith("✓") ? "text-green-500" : "text-destructive"}`}>
+                    {results[key]}
+                  </p>
+                )}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={action}
+                disabled={loading[key]}
+                className="shrink-0"
+              >
+                {loading[key] ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                <span className="ml-1.5">Run</span>
+              </Button>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={action}
-              disabled={loading[key]}
-              className="shrink-0"
-            >
-              {loading[key] ? (
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
-              )}
-              <span className="ml-1.5">Run</span>
-            </Button>
           </div>
+        ))}
+      </div>
+
+      {/* Danger zone */}
+      <div className="border border-destructive/30 rounded-lg p-4 bg-destructive/5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium text-sm text-destructive">Clear All Match Data</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Deletes all matches, teams, standings, and predictions. Use when switching competitions.
+            </p>
+            {results.clearData && (
+              <p className={`text-xs mt-1 ${results.clearData.startsWith("✓") ? "text-green-500" : "text-destructive"}`}>
+                {results.clearData}
+              </p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={triggerClearData}
+            disabled={loading.clearData}
+            className="shrink-0"
+          >
+            {loading.clearData ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+            <span className="ml-1.5">Clear</span>
+          </Button>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
