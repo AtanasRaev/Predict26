@@ -37,9 +37,10 @@ export async function syncStandings(
     let synced = 0;
 
     for (const standingGroup of data.standings) {
-      // Only process TOTAL type standings with a named group (skip knockout rows)
+      // Only process TOTAL type standings (skip HOME/AWAY splits)
       if (standingGroup.type !== "TOTAL") continue;
-      if (!standingGroup.group) continue;
+      // Use the group name if present (WC groups), or "LEAGUE" for single-table leagues
+      const groupKey = standingGroup.group ?? "LEAGUE";
 
       for (const entry of standingGroup.table) {
         if (!entry.team?.id) continue;
@@ -53,12 +54,12 @@ export async function syncStandings(
         await prisma.standing.upsert({
           where: {
             groupName_teamId: {
-              groupName: standingGroup.group,
+              groupName: groupKey,
               teamId: team.id,
             },
           },
           create: {
-            groupName: standingGroup.group,
+            groupName: groupKey,
             teamId: team.id,
             position: entry.position,
             played: entry.playedGames,
