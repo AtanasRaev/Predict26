@@ -13,50 +13,64 @@ function parseFilter(raw?: string): FilterValue {
   return "all";
 }
 
-const stageOrder: Record<string, number> = {
-  GROUP_STAGE: 1,
-  ROUND_OF_32: 2,
-  ROUND_OF_16: 3,
-  QUARTER_FINALS: 4,
-  SEMI_FINALS: 5,
-  THIRD_PLACE: 6,
-  FINAL: 7,
-};
+// ─── Date helpers ────────────────────────────────────────────────────────────
 
-const stageAccent: Record<string, string> = {
-  GROUP_STAGE: "bg-blue-400",
-  ROUND_OF_32: "bg-violet-400",
-  ROUND_OF_16: "bg-indigo-400",
-  QUARTER_FINALS: "bg-amber-400",
-  SEMI_FINALS: "bg-orange-400",
-  THIRD_PLACE: "bg-rose-400",
-  FINAL: "bg-yellow-400",
-};
+const TZ = "America/New_York";
 
-function stageLabel(stage: string, firstMatch?: { group?: string | null }) {
-  if (stage === "GROUP_STAGE" && firstMatch?.group) return "Group Stage";
-  const labels: Record<string, string> = {
-    GROUP_STAGE: "Group Stage",
-    ROUND_OF_32: "Round of 32",
-    ROUND_OF_16: "Round of 16",
-    QUARTER_FINALS: "Quarter-Finals",
-    SEMI_FINALS: "Semi-Finals",
-    THIRD_PLACE: "Third Place",
-    FINAL: "Final",
-  };
-  return labels[stage] ?? stage.replace(/_/g, " ");
+const bostonDateFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function bostonDateKey(date: Date): string {
+  return bostonDateFmt.format(new Date(date)); // "YYYY-MM-DD"
 }
 
-function groupByStage<T extends { stage: string }>(matches: T[]) {
+function formatDateHeader(dateKey: string): string {
+  const todayKey = bostonDateKey(new Date());
+
+  const [y, m, d] = dateKey.split("-").map(Number);
+  // Use noon UTC on that date so the weekday formatting is stable across timezones
+  const displayDate = new Date(Date.UTC(y, m - 1, d, 16, 0, 0)); // 16:00 UTC ≈ noon ET
+
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowKey = bostonDateKey(tomorrowDate);
+
+  const long = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(displayDate);
+
+  if (dateKey === todayKey) return `Today  ·  ${long}`;
+  if (dateKey === tomorrowKey) return `Tomorrow  ·  ${long}`;
+  return long;
+}
+
+// ─── Group matches by Boston calendar date ───────────────────────────────────
+
+function groupByDate<T extends { utcDate: Date }>(
+  matches: T[],
+  newestFirst = false
+): [string, T[]][] {
   const grouped = new Map<string, T[]>();
   for (const match of matches) {
-    if (!grouped.has(match.stage)) grouped.set(match.stage, []);
-    grouped.get(match.stage)!.push(match);
+    const key = bostonDateKey(new Date(match.utcDate));
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(match);
   }
-  return Array.from(grouped.entries()).sort(
-    ([a], [b]) => (stageOrder[a] ?? 99) - (stageOrder[b] ?? 99)
+  const sorted = Array.from(grouped.entries()).sort(([a], [b]) =>
+    newestFirst ? b.localeCompare(a) : a.localeCompare(b)
   );
+  return sorted;
 }
+
+// ─── DB query ────────────────────────────────────────────────────────────────
 
 async function getAllMatches(userId: string) {
   return prisma.match.findMany({
@@ -65,7 +79,12 @@ async function getAllMatches(userId: string) {
       awayTeam: true,
       predictions: {
         where: { userId },
-        select: { id: true, predictedHomeGoals: true, predictedAwayGoals: true, points: true },
+        select: {
+          id: true,
+          predictedHomeGoals: true,
+          predictedAwayGoals: true,
+          points: true,
+        },
       },
       _count: { select: { predictions: true } },
     },
@@ -80,6 +99,8 @@ const EMPTY_MESSAGES: Record<FilterValue, string> = {
   past: "No finished matches yet.",
 };
 
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default async function FixturesPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session) return null;
@@ -87,13 +108,12 @@ export default async function FixturesPage({ searchParams }: PageProps) {
   const { filter: filterParam } = await searchParams;
   const filter = parseFilter(filterParam);
 
-  // Fetch all matches once, then slice for each filter
   const all = await getAllMatches(session.user.id);
   const now = new Date();
 
   const today    = all.filter((m) => isMatchToday(m.utcDate));
   const upcoming = all.filter((m) => m.status === "SCHEDULED" && new Date(m.utcDate) > now);
-  const past     = [...all.filter((m) => m.status === "FINISHED")].reverse(); // newest first
+  const past     = all.filter((m) => m.status === "FINISHED");
 
   const counts: Partial<Record<FilterValue, number>> = {
     all: all.length,
@@ -110,7 +130,8 @@ export default async function FixturesPage({ searchParams }: PageProps) {
   };
 
   const matches = matchesForFilter[filter];
-  const grouped = groupByStage(matches);
+  const newestFirst = filter === "past";
+  const grouped = groupByDate(matches, newestFirst);
 
   return (
     <div>
@@ -125,17 +146,22 @@ export default async function FixturesPage({ searchParams }: PageProps) {
         </p>
       ) : (
         <div className="space-y-8">
-          {grouped.map(([stage, stageMatches]) => (
-            <section key={stage}>
-              <h2 className="text-sm font-semibold mb-3 uppercase tracking-wider text-muted-foreground flex items-center gap-2.5 pb-2 border-b">
-                <span className={`w-2 h-2 rounded-full ${stageAccent[stage] ?? "bg-primary"} shrink-0`} />
-                {stageLabel(stage, stageMatches[0])}
-                <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground/60">
-                  · {stageMatches.length} match{stageMatches.length !== 1 ? "es" : ""}
+          {grouped.map(([dateKey, dayMatches]) => (
+            <section key={dateKey}>
+              {/* Date header */}
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-sm font-semibold text-foreground whitespace-nowrap">
+                  {formatDateHeader(dateKey)}
+                </h2>
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {dayMatches.length} match{dayMatches.length !== 1 ? "es" : ""}
                 </span>
-              </h2>
+              </div>
+
+              {/* Match cards for this day */}
               <div className="space-y-3">
-                {stageMatches.map((match) => {
+                {dayMatches.map((match) => {
                   const userPrediction = match.predictions[0] ?? null;
                   const predStatus = getPredictionStatus(!!userPrediction, match.utcDate);
                   return (
