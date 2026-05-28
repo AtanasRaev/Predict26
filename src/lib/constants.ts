@@ -6,7 +6,7 @@ export const WORLD_CUP_END = new Date("2026-07-31T23:59:59.999Z");
  * Lock predictions 60 seconds before kickoff to absorb clock drift
  * between client and server.
  */
-export const LOCK_BUFFER_MS = 60_000;
+export const LOCK_BUFFER_MS = 2 * 60 * 60 * 1000; // 2 hours before kickoff
 
 export function isWithinTournamentWindow(): boolean {
   const now = new Date();
