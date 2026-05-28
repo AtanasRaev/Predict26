@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { SessionProvider } from "@/components/layout/SessionProvider";
+import { Trophy } from "lucide-react";
 
 export default async function AppLayout({
   children,
@@ -20,8 +21,11 @@ export default async function AppLayout({
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
           {children}
         </main>
-        <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-          World Cup 2026 · Data from football-data.org
+        <footer className="border-t bg-card/50 py-4">
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Trophy className="h-3 w-3 text-yellow-400/70" />
+            <span>World Cup 2026 · Data from football-data.org</span>
+          </div>
         </footer>
       </div>
     </SessionProvider>

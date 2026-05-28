@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { TeamCrest } from "@/components/ui/TeamCrest";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface Team {
@@ -44,11 +43,11 @@ function formatDate(date: Date) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const variants: Record<string, string> = {
+  const styles: Record<string, string> = {
     SCHEDULED: "bg-muted text-muted-foreground",
-    LIVE: "bg-green-500/15 text-green-700 dark:text-green-400",
+    LIVE: "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
     FINISHED: "bg-secondary text-secondary-foreground",
-    POSTPONED: "bg-yellow-500/15 text-yellow-700",
+    POSTPONED: "bg-yellow-500/15 text-yellow-500",
     CANCELLED: "bg-destructive/15 text-destructive",
   };
 
@@ -64,7 +63,7 @@ function StatusBadge({ status }: { status: string }) {
     <span
       className={cn(
         "text-xs font-medium px-2 py-0.5 rounded-full",
-        variants[status] ?? variants.SCHEDULED
+        styles[status] ?? styles.SCHEDULED
       )}
     >
       {labels[status] ?? status}
@@ -81,14 +80,14 @@ function PredictionBadge({
 
   if (status === "predicted") {
     return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-400">
+      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20">
         ✓ Predicted
       </span>
     );
   }
   if (status === "not_predicted") {
     return (
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-700">
+      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20">
         Predict now
       </span>
     );
@@ -122,6 +121,7 @@ export function MatchCard({
   predictionStatus,
 }: MatchCardProps) {
   const isFinished = status === "FINISHED";
+  const isLive = status === "LIVE";
   const stageLabel = group
     ? `Group ${group.replace("GROUP_", "")}`
     : stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -129,9 +129,12 @@ export function MatchCard({
   return (
     <Link
       href={`/match/${id}`}
-      className="block border rounded-lg p-4 hover:bg-muted/40 transition-colors"
+      className={cn(
+        "block border rounded-lg p-4 transition-all hover:border-primary/30 hover:bg-muted/30",
+        isLive && "border-emerald-500/40 bg-emerald-500/5"
+      )}
     >
-      {/* Stage + time row */}
+      {/* Stage + badges row */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-muted-foreground">{stageLabel}</span>
         <div className="flex items-center gap-2">
@@ -143,27 +146,19 @@ export function MatchCard({
       {/* Teams + score */}
       <div className="flex items-center justify-between gap-4">
         {/* Home team */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <TeamCrest
-            crestUrl={homeTeam.crestUrl}
-            teamName={homeTeam.name}
-            size="md"
-          />
-          <span className="font-medium text-sm truncate">{homeTeam.shortName}</span>
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <TeamCrest crestUrl={homeTeam.crestUrl} teamName={homeTeam.name} size="md" />
+          <span className="font-semibold text-sm truncate">{homeTeam.shortName}</span>
         </div>
 
         {/* Score / time */}
-        <div className="text-center shrink-0 min-w-[80px]">
-          {isFinished && homeScore !== null && awayScore !== null ? (
-            <div className="text-2xl font-bold tabular-nums">
-              {homeScore} — {awayScore}
-            </div>
-          ) : status === "LIVE" && homeScore !== null && awayScore !== null ? (
-            <div className="text-2xl font-bold tabular-nums text-green-600">
+        <div className="text-center shrink-0 min-w-[90px]">
+          {(isFinished || isLive) && homeScore !== null && awayScore !== null ? (
+            <div className={cn("text-2xl font-bold tabular-nums", isLive && "text-emerald-400")}>
               {homeScore} — {awayScore}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground font-medium">
               {formatDate(utcDate)}
             </div>
           )}
@@ -172,7 +167,7 @@ export function MatchCard({
             <div className="text-xs text-muted-foreground mt-1">
               You: {userPrediction.predictedHomeGoals}–{userPrediction.predictedAwayGoals}
               {userPrediction.points !== null && userPrediction.points !== undefined && (
-                <span className="ml-1 font-semibold text-foreground">
+                <span className="ml-1 font-semibold text-primary">
                   ({userPrediction.points}pt{userPrediction.points !== 1 ? "s" : ""})
                 </span>
               )}
@@ -181,18 +176,14 @@ export function MatchCard({
         </div>
 
         {/* Away team */}
-        <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-          <span className="font-medium text-sm truncate">{awayTeam.shortName}</span>
-          <TeamCrest
-            crestUrl={awayTeam.crestUrl}
-            teamName={awayTeam.name}
-            size="md"
-          />
+        <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
+          <span className="font-semibold text-sm truncate">{awayTeam.shortName}</span>
+          <TeamCrest crestUrl={awayTeam.crestUrl} teamName={awayTeam.name} size="md" />
         </div>
       </div>
 
       {/* Prediction count */}
-      <div className="mt-3 text-xs text-muted-foreground text-right">
+      <div className="mt-3 text-xs text-muted-foreground/60 text-right">
         {predictionCount} prediction{predictionCount !== 1 ? "s" : ""}
       </div>
     </Link>

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getLeaderboard } from "@/lib/queries/leaderboard";
 import { Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default async function LeaderboardPage() {
   const session = await auth();
@@ -10,8 +11,8 @@ export default async function LeaderboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Trophy className="h-6 w-6 text-yellow-500" />
+      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2.5">
+        <Trophy className="h-6 w-6 text-yellow-400" />
         Leaderboard
       </h1>
 
@@ -24,13 +25,13 @@ export default async function LeaderboardPage() {
       <div className="border rounded-lg bg-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/30 text-muted-foreground">
-              <th className="text-center px-3 py-2.5 w-12">#</th>
-              <th className="text-left px-4 py-2.5">Player</th>
-              <th className="text-center px-3 py-2.5">Pts</th>
-              <th className="text-center px-3 py-2.5 hidden sm:table-cell">Exact 🎯</th>
-              <th className="text-center px-3 py-2.5 hidden sm:table-cell">Correct ✓</th>
-              <th className="text-center px-3 py-2.5 hidden md:table-cell">Submitted</th>
+            <tr className="border-b bg-muted/40 text-muted-foreground">
+              <th className="text-center px-3 py-3 w-12">#</th>
+              <th className="text-left px-4 py-3">Player</th>
+              <th className="text-center px-3 py-3">Pts</th>
+              <th className="text-center px-3 py-3 hidden sm:table-cell">Exact 🎯</th>
+              <th className="text-center px-3 py-3 hidden sm:table-cell">Correct ✓</th>
+              <th className="text-center px-3 py-3 hidden md:table-cell">Submitted</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -42,10 +43,21 @@ export default async function LeaderboardPage() {
               return (
                 <tr
                   key={entry.userId}
-                  className={isCurrentUser ? "bg-primary/5 font-semibold" : "hover:bg-muted/20"}
+                  className={cn(
+                    "transition-colors",
+                    isCurrentUser
+                      ? "bg-primary/8 font-semibold"
+                      : entry.rank === 1
+                      ? "bg-yellow-400/5 hover:bg-yellow-400/8"
+                      : entry.rank === 2
+                      ? "bg-slate-400/5 hover:bg-slate-400/8"
+                      : entry.rank === 3
+                      ? "bg-orange-400/5 hover:bg-orange-400/8"
+                      : "hover:bg-muted/20"
+                  )}
                 >
-                  <td className="text-center px-3 py-3">
-                    {medal ?? entry.rank}
+                  <td className="text-center px-3 py-3 text-base">
+                    {medal ?? <span className="text-muted-foreground text-sm">{entry.rank}</span>}
                   </td>
                   <td className="px-4 py-3">
                     <span>
@@ -57,7 +69,7 @@ export default async function LeaderboardPage() {
                       </span>
                     )}
                   </td>
-                  <td className="text-center px-3 py-3 text-base font-bold">
+                  <td className="text-center px-3 py-3 font-bold text-primary text-base">
                     {entry.totalPoints}
                   </td>
                   <td className="text-center px-3 py-3 hidden sm:table-cell text-muted-foreground">

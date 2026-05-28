@@ -54,6 +54,17 @@ function stageLabel(stage: string, firstMatch?: { group?: string | null }) {
   return labels[stage] ?? stage.replace(/_/g, " ");
 }
 
+// Accent color per stage for the section indicator
+const stageAccent: Record<string, string> = {
+  GROUP_STAGE: "bg-blue-400",
+  ROUND_OF_32: "bg-violet-400",
+  ROUND_OF_16: "bg-indigo-400",
+  QUARTER_FINALS: "bg-amber-400",
+  SEMI_FINALS: "bg-orange-400",
+  THIRD_PLACE: "bg-rose-400",
+  FINAL: "bg-yellow-400",
+};
+
 export default async function FixturesPage() {
   const session = await auth();
   if (!session) return null;
@@ -72,8 +83,12 @@ export default async function FixturesPage() {
       <div className="space-y-8">
         {grouped.map(([stage, matches]) => (
           <section key={stage}>
-            <h2 className="text-lg font-semibold mb-3 border-b pb-2">
+            <h2 className="text-sm font-semibold mb-3 uppercase tracking-wider text-muted-foreground flex items-center gap-2.5 pb-2 border-b">
+              <span className={`w-2 h-2 rounded-full ${stageAccent[stage] ?? "bg-primary"} shrink-0`} />
               {stageLabel(stage, matches[0])}
+              <span className="text-xs font-normal normal-case tracking-normal text-muted-foreground/60">
+                · {matches.length} match{matches.length !== 1 ? "es" : ""}
+              </span>
             </h2>
             <div className="space-y-3">
               {matches.map((match) => {
