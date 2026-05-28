@@ -32,7 +32,7 @@ export async function syncFixtures(
   }
 
   return withSyncLog("FIXTURES", async (incrementRequests) => {
-    const data = await fetchMatches("SA", 2025); // TEST MODE — revert to ("WC", 2026)
+    const data = await fetchMatches("BSA", 2025); // TEST MODE — revert to ("WC", 2026)
     incrementRequests();
 
     let synced = 0;

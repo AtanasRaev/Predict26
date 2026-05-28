@@ -31,7 +31,7 @@ export async function syncStandings(
   }
 
   return withSyncLog("STANDINGS", async (incrementRequests) => {
-    const data = await fetchStandings("SA", 2025); // TEST MODE — revert to ("WC", 2026)
+    const data = await fetchStandings("BSA", 2025); // TEST MODE — revert to ("WC", 2026)
     incrementRequests();
 
     let synced = 0;

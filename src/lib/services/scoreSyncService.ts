@@ -50,7 +50,7 @@ export async function syncRecentScores(
       .toISOString()
       .slice(0, 10);
 
-    const data = await fetchMatchesByDateRange("SA", dateFrom, dateTo); // TEST MODE — revert to "WC"
+    const data = await fetchMatchesByDateRange("BSA", dateFrom, dateTo); // TEST MODE — revert to "WC"
     incrementRequests();
 
     let synced = 0;
