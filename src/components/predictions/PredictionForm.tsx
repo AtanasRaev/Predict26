@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getPredictionLockTime } from "@/lib/constants";
@@ -64,6 +65,7 @@ export function PredictionForm({
   existingPrediction,
   onSaved,
 }: PredictionFormProps) {
+  const router = useRouter();
   const lockTime = getPredictionLockTime(new Date(matchUtcDate));
   const timeLeft = useCountdown(lockTime);
   const isLocked = timeLeft <= 0;
@@ -110,6 +112,9 @@ export function PredictionForm({
         } else {
           setSaved(true);
           onSaved?.();
+          // Immediately re-fetch all server components so the predictions list
+          // (and leaderboard, fixtures, etc.) shows the updated data right away.
+          router.refresh();
           setTimeout(() => setSaved(false), 3000);
         }
       } catch {
