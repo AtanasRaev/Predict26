@@ -60,9 +60,7 @@ export default async function LeaderboardPage() {
                     {medal ?? <span className="text-muted-foreground text-sm">{entry.rank}</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span>
-                      {entry.firstName} {entry.lastName}
-                    </span>
+                    <span>{entry.username}</span>
                     {isCurrentUser && (
                       <span className="ml-1.5 text-xs text-muted-foreground font-normal">
                         (you)

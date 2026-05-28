@@ -219,7 +219,7 @@ export default async function DashboardPage() {
                       >
                         <td className="px-4 py-2.5 w-10 text-center text-base">{medal}</td>
                         <td className="py-2.5">
-                          {entry.firstName} {entry.lastName}
+                          {entry.username}
                           {isCurrentUser && (
                             <span className="ml-1 text-xs text-muted-foreground font-normal">
                               (you)
