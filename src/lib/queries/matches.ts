@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MatchStatus } from "@/generated/prisma/client";
 import { getPredictionLockTime } from "@/lib/constants";
+import { isOpenForPrediction } from "@/lib/utils/predictionVisibility";
 
 export type MatchWithTeams = Awaited<
   ReturnType<typeof getMatchById>
@@ -70,20 +71,24 @@ export async function getUpcomingMatches(limit = 5, userId?: string) {
   });
 }
 
-/** Count how many upcoming (unlocked) matches a user has no prediction for */
+/** Count how many matches are currently open for prediction and the user hasn't predicted yet */
 export async function getMissingPredictionCount(userId: string): Promise<number> {
   const now = new Date();
-  const upcomingMatches = await prisma.match.findMany({
+  const windowEnd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  const candidates = await prisma.match.findMany({
     where: {
       status: MatchStatus.SCHEDULED,
-      utcDate: { gt: new Date(now.getTime() + 60_000) }, // not locked yet
+      utcDate: { gt: now, lte: windowEnd },
     },
     include: {
       predictions: { where: { userId }, select: { id: true } },
     },
   });
 
-  return upcomingMatches.filter((m) => m.predictions.length === 0).length;
+  return candidates.filter(
+    (m) => m.predictions.length === 0 && isOpenForPrediction(m.utcDate)
+  ).length;
 }
 
 /** Get all matches for a specific stage */

@@ -88,8 +88,8 @@ export default async function DashboardPage() {
           <AlertTriangle className="h-4 w-4 text-accent" />
           <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>
-              You have <strong>{missingCount}</strong> upcoming{" "}
-              {missingCount === 1 ? "match" : "matches"} without a prediction today.
+              You have <strong>{missingCount}</strong>{" "}
+              {missingCount === 1 ? "match" : "matches"} open for prediction.
             </span>
             <Button asChild size="sm" variant="outline" className="shrink-0 border-accent/30 text-accent hover:bg-accent/10">
               <Link href="/fixtures">Predict now</Link>
