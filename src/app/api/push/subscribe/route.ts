@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = subscribeSchema.safeParse(body);
   if (!parsed.success) {
+    console.error("[Push] Invalid subscription body:", JSON.stringify(body), parsed.error.flatten());
     return NextResponse.json({ error: "Invalid subscription object" }, { status: 400 });
   }
 

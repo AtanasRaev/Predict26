@@ -58,11 +58,45 @@ export function NotificationToggle() {
       };
     }
 
-    // Check if there's already an active subscription in the push manager
+    // Verify subscription state against both PushManager AND the server.
+    // PushManager alone can show a local subscription that was never saved to the DB.
     navigator.serviceWorker.ready
       .then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
-        if (!cancelled) setState(sub ? "subscribed" : "unsubscribed");
+        if (!sub) {
+          if (!cancelled) setState("unsubscribed");
+          return;
+        }
+        // Confirm the server actually has this subscription recorded
+        const res = await fetch("/api/push/subscribe");
+        if (!cancelled) {
+          if (res.ok) {
+            const data = await res.json();
+            if (data.subscribed) {
+              setState("subscribed");
+            } else {
+              // Local sub exists but not in DB — re-sync it
+              const json = sub.toJSON();
+              const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+              if (vapidKey && json.endpoint && json.keys?.p256dh && json.keys?.auth) {
+                await fetch("/api/push/subscribe", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    endpoint: json.endpoint,
+                    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+                  }),
+                });
+                setState("subscribed");
+              } else {
+                await sub.unsubscribe();
+                setState("unsubscribed");
+              }
+            }
+          } else {
+            setState("unsubscribed");
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setState("unsubscribed");
@@ -102,7 +136,10 @@ export function NotificationToggle() {
       if (res.ok) {
         setState("subscribed");
       } else {
-        throw new Error("Server rejected subscription");
+        // Roll back the local PushManager subscription so the UI stays consistent.
+        // Without this, a page refresh would show "subscribed" even though the DB has no record.
+        await sub.unsubscribe();
+        throw new Error(`Server rejected subscription (${res.status})`);
       }
     } catch (err) {
       console.error("[Push] subscribe error:", err);
@@ -204,10 +241,10 @@ export function NotificationToggle() {
         size="sm"
         onClick={unsubscribe}
         disabled={busy}
-        title="Notifications on — click to disable"
         className="text-yellow-400 hover:text-yellow-300"
       >
         <BellRing className="h-4 w-4" />
+        Notifications on
       </Button>
     );
   }
@@ -219,10 +256,10 @@ export function NotificationToggle() {
       size="sm"
       onClick={subscribe}
       disabled={busy}
-      title="Enable match prediction reminders"
       className="text-muted-foreground hover:text-foreground"
     >
       <Bell className="h-4 w-4" />
+      Notify me
     </Button>
   );
 }
