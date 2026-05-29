@@ -126,7 +126,7 @@ export function NotificationToggle() {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           // Must be Uint8Array — iOS Safari rejects plain ArrayBuffer with AbortError
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
+          applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as BufferSource,
         });
       }
 
