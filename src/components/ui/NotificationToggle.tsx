@@ -4,6 +4,21 @@ import { useState, useEffect } from "react";
 import { Bell, BellOff, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+function isIOSBrowser() {
+  return (
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) &&
+    !(window as Window & { MSStream?: unknown }).MSStream
+  );
+}
+
+function isStandalonePwa() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
 /** Convert VAPID base64url string to Uint8Array for PushManager.subscribe().
  *  Must return Uint8Array (not plain ArrayBuffer) — iOS Safari rejects ArrayBuffer with AbortError. */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -38,14 +53,18 @@ export function NotificationToggle() {
     };
 
     // iOS Safari requires the app to be installed as a PWA (Add to Home Screen)
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const isIOS = isIOSBrowser();
+    const isStandalone = isStandalonePwa();
+
+    if (isIOS && !isStandalone) {
+      updateState("ios-hint");
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      updateState(isIOS && !isStandalone ? "ios-hint" : "unsupported");
+      updateState("unsupported");
       return () => {
         cancelled = true;
       };
@@ -67,8 +86,11 @@ export function NotificationToggle() {
           if (!cancelled) setState("unsubscribed");
           return;
         }
-        // Confirm the server actually has this subscription recorded
-        const res = await fetch("/api/push/subscribe");
+        // Confirm the server actually has this device/browser endpoint recorded.
+        const params = new URLSearchParams({ endpoint: sub.endpoint });
+        const res = await fetch(`/api/push/subscribe?${params.toString()}`, {
+          cache: "no-store",
+        });
         if (!cancelled) {
           if (res.ok) {
             const data = await res.json();
@@ -78,7 +100,7 @@ export function NotificationToggle() {
               // Local sub exists but not in DB — re-sync it
               const json = sub.toJSON();
               if (json.endpoint && json.keys?.p256dh && json.keys?.auth) {
-                await fetch("/api/push/subscribe", {
+                const syncRes = await fetch("/api/push/subscribe", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -86,7 +108,12 @@ export function NotificationToggle() {
                     keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
                   }),
                 });
-                setState("subscribed");
+                if (syncRes.ok) {
+                  setState("subscribed");
+                } else {
+                  await sub.unsubscribe();
+                  setState("unsubscribed");
+                }
               } else {
                 await sub.unsubscribe();
                 setState("unsubscribed");
@@ -131,6 +158,11 @@ export function NotificationToggle() {
       }
 
       const json = sub.toJSON();
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+        await sub.unsubscribe();
+        throw new Error("Push subscription is missing endpoint or keys");
+      }
+
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

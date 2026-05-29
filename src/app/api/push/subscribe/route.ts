@@ -12,12 +12,15 @@ const subscribeSchema = z.object({
 });
 
 /** GET — returns whether the current user has any active subscription */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ subscribed: false });
 
+  const endpoint = req.nextUrl.searchParams.get("endpoint");
   const sub = await prisma.pushSubscription.findFirst({
-    where: { userId: session.user.id },
+    where: endpoint
+      ? { userId: session.user.id, endpoint }
+      : { userId: session.user.id },
     select: { endpoint: true },
   });
 
@@ -38,21 +41,26 @@ export async function POST(req: NextRequest) {
 
   const { endpoint, keys } = parsed.data;
 
-  await prisma.pushSubscription.upsert({
-    where: { endpoint },
-    create: {
-      userId: session.user.id,
-      endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-    },
-    update: {
-      // Re-associate with the current user in case of browser reinstall
-      userId: session.user.id,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-    },
-  });
+  try {
+    await prisma.pushSubscription.upsert({
+      where: { endpoint },
+      create: {
+        userId: session.user.id,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      },
+      update: {
+        // Re-associate with the current user in case of browser reinstall
+        userId: session.user.id,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      },
+    });
+  } catch (err) {
+    console.error("[Push] Failed to save subscription:", err);
+    return NextResponse.json({ error: "Failed to save subscription" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
