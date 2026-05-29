@@ -21,7 +21,8 @@ type NotifState =
   | "ios-hint"      // iOS Safari — needs "Add to Home Screen" first
   | "denied"        // User previously blocked notifications
   | "subscribed"    // Active subscription in DB
-  | "unsubscribed"; // Supported + permitted, but not subscribed
+  | "unsubscribed"  // Supported + permitted, but not subscribed
+  | "error";        // Subscription attempt failed
 
 export function NotificationToggle() {
   const [state, setState] = useState<NotifState>("loading");
@@ -105,6 +106,7 @@ export function NotificationToggle() {
       }
     } catch (err) {
       console.error("[Push] subscribe error:", err);
+      setState("error");
     } finally {
       setBusy(false);
     }
@@ -172,6 +174,22 @@ export function NotificationToggle() {
         disabled
         className="text-muted-foreground/40 cursor-not-allowed"
         title="Notifications blocked — enable them in browser settings"
+      >
+        <BellOff className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  // Subscription failed — clicking retries
+  if (state === "error") {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={subscribe}
+        disabled={busy}
+        title="Notification setup failed — tap to retry"
+        className="text-red-400 hover:text-red-300"
       >
         <BellOff className="h-4 w-4" />
       </Button>

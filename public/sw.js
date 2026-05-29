@@ -18,10 +18,9 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title ?? "Predict26", {
       body: data.body ?? "",
-      icon: "/icon-192.png",
-      badge: "/icon-72.png",
+      icon: "/logo.png",
       data: { url: data.url ?? "/fixtures" },
-      tag: "predict26-reminder", // replaces a previous notification for the same match
+      tag: "predict26-reminder",
       requireInteraction: false,
     })
   );
