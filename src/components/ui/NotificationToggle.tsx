@@ -223,6 +223,7 @@ export function NotificationToggle() {
           title="Push notifications require iOS Home Screen install"
         >
           <Bell className="h-4 w-4" />
+          Enable on iPhone
         </Button>
         {tooltip && (
           <div className="absolute right-0 top-9 z-50 w-64 rounded-lg border bg-card p-3 text-xs shadow-lg">

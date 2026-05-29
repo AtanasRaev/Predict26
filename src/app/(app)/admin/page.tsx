@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { PushBroadcastControl } from "@/components/admin/PushBroadcastControl";
 import { SyncControls } from "@/components/admin/SyncControls";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ export default async function AdminPage() {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") redirect("/");
 
-  const [syncLogs, recentMatches] = await Promise.all([
+  const [syncLogs, recentMatches, pushSubscriptionCount] = await Promise.all([
     prisma.apiSyncLog.findMany({
       orderBy: { startedAt: "desc" },
       take: 20,
@@ -31,6 +32,7 @@ export default async function AdminPage() {
       orderBy: { utcDate: "desc" },
       take: 10,
     }),
+    prisma.pushSubscription.count(),
   ]);
 
   return (
@@ -44,6 +46,11 @@ export default async function AdminPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Sync Controls</h2>
         <SyncControls initialLogs={JSON.parse(JSON.stringify(syncLogs))} />
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Push Notifications</h2>
+        <PushBroadcastControl initialSubscriptionCount={pushSubscriptionCount} />
       </section>
 
       {/* Recently finished matches — manual score edit */}

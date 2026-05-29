@@ -164,26 +164,30 @@ export function Navbar() {
               </Link>
             )}
           </div>
-          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/20 text-xs font-black text-primary ring-1 ring-primary/30">
-                {initial}
-              </span>
-              <span className="truncate text-sm font-medium text-muted-foreground">
-                {session?.user.username}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
+          <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mb-3 flex [&_button]:w-full [&_button]:justify-start">
               <NotificationToggle />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </Button>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/20 text-xs font-black text-primary ring-1 ring-primary/30">
+                  {initial}
+                </span>
+                <span className="truncate text-sm font-medium text-muted-foreground">
+                  {session?.user.username}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </Button>
+              </div>
             </div>
           </div>
         </div>
