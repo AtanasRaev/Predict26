@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import { Bell, BellOff, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/** Convert VAPID base64url string to a plain ArrayBuffer for PushManager.subscribe() */
-function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
+/** Convert VAPID base64url string to Uint8Array for PushManager.subscribe().
+ *  Must return Uint8Array (not plain ArrayBuffer) — iOS Safari rejects ArrayBuffer with AbortError. */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
-  const buffer = new ArrayBuffer(rawData.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < rawData.length; i++) view[i] = rawData.charCodeAt(i);
-  return buffer;
+  const output = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i);
+  return output;
 }
 
 type NotifState =
@@ -77,8 +77,7 @@ export function NotificationToggle() {
             } else {
               // Local sub exists but not in DB — re-sync it
               const json = sub.toJSON();
-              const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-              if (vapidKey && json.endpoint && json.keys?.p256dh && json.keys?.auth) {
+              if (json.endpoint && json.keys?.p256dh && json.keys?.auth) {
                 await fetch("/api/push/subscribe", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -115,13 +114,21 @@ export function NotificationToggle() {
       if (permission !== "granted") { setState("unsubscribed"); return; }
 
       const reg = await navigator.serviceWorker.ready;
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidKey) throw new Error("VAPID public key not configured");
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToArrayBuffer(vapidKey),
-      });
+      // Fetch VAPID key from server — avoids iOS PWA cached-bundle issues with process.env
+      const keyRes = await fetch("/api/push/public-key", { cache: "no-store" });
+      if (!keyRes.ok) throw new Error("Failed to get VAPID public key");
+      const { publicKey } = await keyRes.json() as { publicKey: string };
+
+      // Reuse existing subscription if present; create new one otherwise
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          // Must be Uint8Array — iOS Safari rejects plain ArrayBuffer with AbortError
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+      }
 
       const json = sub.toJSON();
       const res = await fetch("/api/push/subscribe", {
@@ -137,7 +144,6 @@ export function NotificationToggle() {
         setState("subscribed");
       } else {
         // Roll back the local PushManager subscription so the UI stays consistent.
-        // Without this, a page refresh would show "subscribed" even though the DB has no record.
         await sub.unsubscribe();
         throw new Error(`Server rejected subscription (${res.status})`);
       }
