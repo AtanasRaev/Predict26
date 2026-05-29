@@ -2,6 +2,7 @@
   "name": "Predict26 — World Cup 2026",
   "short_name": "Predict26",
   "description": "Predict World Cup 2026 match scores and compete with friends",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

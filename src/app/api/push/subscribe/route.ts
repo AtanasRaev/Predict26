@@ -3,7 +3,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
-const subscribeSchema = z.object({
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const browserSubscriptionSchema = z.object({
   endpoint: z.string().url(),
   keys: z.object({
     p256dh: z.string().min(1),
@@ -11,12 +14,17 @@ const subscribeSchema = z.object({
   }),
 });
 
+const subscribeSchema = z.union([
+  browserSubscriptionSchema,
+  z.object({ subscription: browserSubscriptionSchema }),
+]).transform((value) => ("subscription" in value ? value.subscription : value));
+
 /** GET — returns whether the current user has any active subscription */
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ subscribed: false });
 
-  const endpoint = req.nextUrl.searchParams.get("endpoint");
+  const endpoint = req.nextUrl.searchParams.get("endpoint")?.trim();
   const sub = await prisma.pushSubscription.findFirst({
     where: endpoint
       ? { userId: session.user.id, endpoint }

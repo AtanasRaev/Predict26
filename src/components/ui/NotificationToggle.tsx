@@ -19,6 +19,21 @@ function isStandalonePwa() {
   );
 }
 
+function supportsPushNotifications() {
+  return (
+    typeof window !== "undefined" &&
+    window.isSecureContext &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
+}
+
+async function getServiceWorkerRegistration() {
+  await navigator.serviceWorker.register("/sw.js");
+  return await navigator.serviceWorker.ready;
+}
+
 /** Convert VAPID base64url string to Uint8Array for PushManager.subscribe().
  *  Must return Uint8Array (not plain ArrayBuffer) — iOS Safari rejects ArrayBuffer with AbortError. */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -43,6 +58,7 @@ export function NotificationToggle() {
   const [state, setState] = useState<NotifState>("loading");
   const [busy, setBusy] = useState(false);
   const [tooltip, setTooltip] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +79,7 @@ export function NotificationToggle() {
       };
     }
 
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    if (!supportsPushNotifications()) {
       updateState("unsupported");
       return () => {
         cancelled = true;
@@ -79,7 +95,7 @@ export function NotificationToggle() {
 
     // Verify subscription state against both PushManager AND the server.
     // PushManager alone can show a local subscription that was never saved to the DB.
-    navigator.serviceWorker.ready
+    getServiceWorkerRegistration()
       .then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
         if (!sub) {
@@ -103,10 +119,7 @@ export function NotificationToggle() {
                 const syncRes = await fetch("/api/push/subscribe", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    endpoint: json.endpoint,
-                    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-                  }),
+                  body: JSON.stringify({ subscription: json }),
                 });
                 if (syncRes.ok) {
                   setState("subscribed");
@@ -135,12 +148,17 @@ export function NotificationToggle() {
 
   const subscribe = async () => {
     setBusy(true);
+    setErrorMessage("");
     try {
+      if (!supportsPushNotifications()) {
+        throw new Error("Push notifications require HTTPS and browser support.");
+      }
+
       const permission = await Notification.requestPermission();
       if (permission === "denied") { setState("denied"); return; }
       if (permission !== "granted") { setState("unsubscribed"); return; }
 
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getServiceWorkerRegistration();
 
       // Fetch VAPID key from server — avoids iOS PWA cached-bundle issues with process.env
       const keyRes = await fetch("/api/push/public-key", { cache: "no-store" });
@@ -166,21 +184,20 @@ export function NotificationToggle() {
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: json.endpoint,
-          keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
-        }),
+        body: JSON.stringify({ subscription: json }),
       });
 
       if (res.ok) {
         setState("subscribed");
       } else {
+        const payload = await res.json().catch(() => ({ error: "Failed to save subscription" }));
         // Roll back the local PushManager subscription so the UI stays consistent.
         await sub.unsubscribe();
-        throw new Error(`Server rejected subscription (${res.status})`);
+        throw new Error(String(payload.error ?? `Server rejected subscription (${res.status})`));
       }
     } catch (err) {
       console.error("[Push] subscribe error:", err);
+      setErrorMessage(err instanceof Error ? err.message : "Notification setup failed.");
       setState("error");
     } finally {
       setBusy(false);
@@ -189,8 +206,9 @@ export function NotificationToggle() {
 
   const unsubscribe = async () => {
     setBusy(true);
+    setErrorMessage("");
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getServiceWorkerRegistration();
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         await fetch("/api/push/subscribe", {
@@ -238,8 +256,21 @@ export function NotificationToggle() {
     );
   }
 
-  // Completely unsupported (desktop non-Chrome, etc.)
-  if (state === "unsupported") return null;
+  // Completely unsupported or not running in a secure context.
+  if (state === "unsupported") {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="text-muted-foreground/40 cursor-not-allowed"
+        title="Push notifications require HTTPS and browser support"
+      >
+        <BellOff className="h-4 w-4" />
+        Notifications unavailable
+      </Button>
+    );
+  }
 
   // Blocked by the user
   if (state === "denied") {
@@ -252,6 +283,7 @@ export function NotificationToggle() {
         title="Notifications blocked — enable them in browser settings"
       >
         <BellOff className="h-4 w-4" />
+        Notifications blocked
       </Button>
     );
   }
@@ -264,10 +296,11 @@ export function NotificationToggle() {
         size="sm"
         onClick={subscribe}
         disabled={busy}
-        title="Notification setup failed — tap to retry"
+        title={errorMessage || "Notification setup failed - tap to retry"}
         className="text-red-400 hover:text-red-300"
       >
         <BellOff className="h-4 w-4" />
+        Retry notifications
       </Button>
     );
   }
