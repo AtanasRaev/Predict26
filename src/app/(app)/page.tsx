@@ -75,7 +75,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Button asChild className="h-11 w-full sm:h-9 sm:w-auto">
-            <Link href="/fixtures">
+            <Link href="/predict">
               Predict matches
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
               {missingCount === 1 ? "match" : "matches"} open for prediction.
             </span>
             <Button asChild size="sm" variant="outline" className="shrink-0 border-accent/30 text-accent hover:bg-accent/10">
-              <Link href="/fixtures">Predict now</Link>
+              <Link href="/predict">Predict now</Link>
             </Button>
           </AlertDescription>
         </Alert>
