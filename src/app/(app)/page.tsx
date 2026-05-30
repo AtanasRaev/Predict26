@@ -60,21 +60,21 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-7">
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-card/82 p-5 shadow-2xl shadow-black/15 sm:p-7">
+    <div className="space-y-5 sm:space-y-7">
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-card/82 p-4 shadow-2xl shadow-black/15 sm:rounded-3xl sm:p-7">
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
               World Cup 2026 Predictions
             </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+            <h1 className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-4xl">
               Welcome back, {session.user.username}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
               Make your calls before kickoff, climb the table, and chase perfect scores.
             </p>
           </div>
-          <Button asChild className="w-full sm:w-auto">
+          <Button asChild className="h-11 w-full sm:h-9 sm:w-auto">
             <Link href="/fixtures">
               Predict matches
               <ArrowRight className="h-4 w-4" />
@@ -98,13 +98,13 @@ export default async function DashboardPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, tone, border, bg }) => (
-          <div key={label} className={`rounded-2xl border ${border} ${bg} bg-card/85 p-4 shadow-sm`}>
+          <div key={label} className={`rounded-xl border ${border} ${bg} bg-card/85 p-3 shadow-sm sm:rounded-2xl sm:p-4`}>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className={`text-2xl font-black tabular-nums ${tone}`}>{value}</div>
-                <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <div className={`text-xl font-black tabular-nums sm:text-2xl ${tone}`}>{value}</div>
+                <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:text-xs sm:tracking-[0.14em]">
                   {label}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-black">
+            <h2 className="flex items-center gap-2 text-base font-black sm:text-lg">
               <span className="inline-block h-5 w-1 rounded-full bg-primary" />
               Upcoming Matches
             </h2>
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
               Full leaderboard
             </Link>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-card/85 shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-card/85 shadow-sm sm:rounded-2xl">
             {top5.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">No scores yet</p>
             ) : (

@@ -18,13 +18,13 @@ export function FixtureFilters({
   counts?: Partial<Record<FilterValue, number>>;
 }) {
   return (
-    <div className="flex w-full gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.035] p-1 sm:w-auto">
+    <div className="grid w-full grid-cols-4 gap-1 rounded-xl border border-white/10 bg-white/[0.035] p-1 sm:w-auto sm:rounded-2xl">
       {FILTERS.map(({ value, label }) => (
         <Link
           key={value}
           href={value === "all" ? "/fixtures" : `/fixtures?filter=${value}`}
           className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold transition-colors",
+            "flex min-w-0 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-colors min-[380px]:gap-1.5 min-[380px]:text-sm sm:rounded-xl sm:px-3",
             current === value
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"

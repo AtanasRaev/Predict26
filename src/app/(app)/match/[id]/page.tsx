@@ -76,7 +76,7 @@ export default async function MatchPage({ params }: PageProps) {
   const isLive = match.status === "LIVE";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
       <div className="text-center">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
           {stageLabel(match.stage, match.group)}
@@ -84,20 +84,20 @@ export default async function MatchPage({ params }: PageProps) {
         <p className="mt-2 text-sm text-muted-foreground">{formatDateTime(match.utcDate)}</p>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-card/85 p-5 shadow-2xl shadow-black/15 sm:p-7">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+      <div className="rounded-xl border border-white/10 bg-card/85 p-4 shadow-2xl shadow-black/15 sm:rounded-3xl sm:p-7">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
           <div className="flex min-w-0 flex-col items-center gap-3">
             <TeamCrest crestUrl={match.homeTeam.crestUrl} teamName={match.homeTeam.name} size="lg" />
-            <span className="max-w-full truncate text-center font-black">{match.homeTeam.shortName}</span>
+            <span className="max-w-full truncate text-center text-sm font-black sm:text-base">{match.homeTeam.shortName}</span>
           </div>
 
           <div className="text-center">
             {(isFinished || isLive) && match.homeScore !== null && match.awayScore !== null ? (
-              <div className={`text-4xl font-black tabular-nums sm:text-6xl ${isLive ? "text-emerald-300" : ""}`}>
+              <div className={`text-3xl font-black tabular-nums sm:text-6xl ${isLive ? "text-emerald-300" : ""}`}>
                 {match.homeScore}-{match.awayScore}
               </div>
             ) : (
-              <div className="text-3xl font-black uppercase tracking-[0.18em] text-muted-foreground sm:text-5xl">
+              <div className="text-2xl font-black uppercase tracking-[0.18em] text-muted-foreground sm:text-5xl">
                 vs
               </div>
             )}
@@ -110,13 +110,13 @@ export default async function MatchPage({ params }: PageProps) {
 
           <div className="flex min-w-0 flex-col items-center gap-3">
             <TeamCrest crestUrl={match.awayTeam.crestUrl} teamName={match.awayTeam.name} size="lg" />
-            <span className="max-w-full truncate text-center font-black">{match.awayTeam.shortName}</span>
+            <span className="max-w-full truncate text-center text-sm font-black sm:text-base">{match.awayTeam.shortName}</span>
           </div>
         </div>
       </div>
 
       {!predictionsVisible && isMatchWithinPredictionWindow(match.utcDate) && (
-        <section className="rounded-2xl border border-white/10 bg-card/85 p-4 shadow-sm sm:p-5">
+        <section className="rounded-xl border border-white/10 bg-card/85 p-4 shadow-sm sm:rounded-2xl sm:p-5">
           <h2 className="mb-4 text-lg font-black">Your Prediction</h2>
           <PredictionForm
             matchId={match.id}
@@ -134,7 +134,7 @@ export default async function MatchPage({ params }: PageProps) {
         </div>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-white/10 bg-card/85 shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-white/10 bg-card/85 shadow-sm sm:rounded-2xl">
         <div className="border-b border-white/10 p-4">
           <h2 className="font-black">Predictions</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">

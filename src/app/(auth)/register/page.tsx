@@ -85,12 +85,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-md overflow-hidden border-white/10 bg-card/88 shadow-2xl shadow-black/40 backdrop-blur">
+    <Card className="w-full max-w-md overflow-hidden rounded-xl border-white/10 bg-card/90 shadow-2xl shadow-black/35 backdrop-blur sm:rounded-2xl">
       <div className="h-1 bg-gradient-to-r from-primary via-emerald-400 to-accent" />
 
-      <CardHeader className="px-6 pb-4 pt-7 text-center">
+      <CardHeader className="px-5 pb-4 pt-6 text-center sm:px-6 sm:pt-7">
         <div className="mb-3 flex justify-center">
-          <div className="rounded-2xl bg-accent/15 p-3 ring-1 ring-accent/30">
+          <div className="rounded-xl bg-accent/15 p-3 ring-1 ring-accent/30">
             <Image src="/logo.png" alt="Predict26" width={28} height={28} />
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-3 px-6">
+        <CardContent className="space-y-3 px-5 sm:px-6">
           {error && (
             <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -113,6 +113,7 @@ export default function RegisterPage() {
                 value={form.firstName}
                 onChange={(e) => update("firstName", e.target.value)}
                 required
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
@@ -122,6 +123,7 @@ export default function RegisterPage() {
                 value={form.lastName}
                 onChange={(e) => update("lastName", e.target.value)}
                 required
+                className="h-11"
               />
             </div>
           </div>
@@ -135,6 +137,7 @@ export default function RegisterPage() {
               placeholder="letters, numbers, underscores"
               required
               autoComplete="username"
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -146,6 +149,7 @@ export default function RegisterPage() {
               onChange={(e) => update("password", e.target.value)}
               required
               autoComplete="new-password"
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -157,11 +161,12 @@ export default function RegisterPage() {
               onChange={(e) => update("confirmPassword", e.target.value)}
               required
               autoComplete="new-password"
+              className="h-11"
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-5 px-6 pb-7 pt-2">
-          <Button type="submit" className="w-full" disabled={loading}>
+        <CardFooter className="flex flex-col gap-5 px-5 pb-6 pt-2 sm:px-6 sm:pb-7">
+          <Button type="submit" className="h-11 w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </Button>
           <p className="text-center text-sm leading-6 text-muted-foreground">

@@ -21,11 +21,11 @@ export default async function AppLayout({
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 w-full">
-          <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
             {children}
           </div>
         </main>
-        <footer className="border-t border-white/10 bg-card/70 py-5 backdrop-blur">
+        <footer className="hidden border-t border-white/10 bg-card/70 py-5 backdrop-blur md:block">
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 text-xs text-muted-foreground sm:px-6 lg:px-8">
             <Image src="/logo.png" alt="" width={14} height={14} />
             <span>World Cup 2026 - Data from football-data.org</span>

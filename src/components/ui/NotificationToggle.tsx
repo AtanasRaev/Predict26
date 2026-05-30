@@ -241,11 +241,11 @@ export function NotificationToggle() {
           title="Push notifications require iOS Home Screen install"
         >
           <Bell className="h-4 w-4" />
-          Enable on iPhone
+          <span className="hidden sm:inline">Enable</span>
         </Button>
         {tooltip && (
           <div className="absolute right-0 top-9 z-50 w-64 rounded-lg border bg-card p-3 text-xs shadow-lg">
-            <p className="font-semibold mb-1">📱 Enable on iPhone</p>
+            <p className="font-semibold mb-1">📱 Enable</p>
             <p className="text-muted-foreground">
               Tap <strong>Share → Add to Home Screen</strong> in Safari, then open
               the app from your Home Screen to enable push notifications.
@@ -267,7 +267,7 @@ export function NotificationToggle() {
         title="Push notifications require HTTPS and browser support"
       >
         <BellOff className="h-4 w-4" />
-        Notifications unavailable
+        <span className="hidden sm:inline">Notifications unavailable</span>
       </Button>
     );
   }
@@ -283,7 +283,7 @@ export function NotificationToggle() {
         title="Notifications blocked — enable them in browser settings"
       >
         <BellOff className="h-4 w-4" />
-        Notifications blocked
+        <span className="hidden sm:inline">Notifications blocked</span>
       </Button>
     );
   }
@@ -300,7 +300,7 @@ export function NotificationToggle() {
         className="text-red-400 hover:text-red-300"
       >
         <BellOff className="h-4 w-4" />
-        Retry notifications
+        <span className="hidden sm:inline">Retry notifications</span>
       </Button>
     );
   }
@@ -316,7 +316,7 @@ export function NotificationToggle() {
         className="text-yellow-400 hover:text-yellow-300"
       >
         <BellRing className="h-4 w-4" />
-        Notifications on
+        <span className="hidden sm:inline">Notifications on</span>
       </Button>
     );
   }
@@ -331,7 +331,7 @@ export function NotificationToggle() {
       className="text-muted-foreground hover:text-foreground"
     >
       <Bell className="h-4 w-4" />
-      Notify me
+      <span className="hidden sm:inline">Notify me</span>
     </Button>
   );
 }

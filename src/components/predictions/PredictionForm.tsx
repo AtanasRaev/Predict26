@@ -77,6 +77,15 @@ function TeamLabel({ team, align = "left" }: { team: Team; align?: "left" | "rig
   );
 }
 
+function MobileTeamHeader({ team }: { team: Team }) {
+  return (
+    <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+      <TeamCrest crestUrl={team.crestUrl} teamName={team.name} size="md" />
+      <span className="max-w-full truncate text-xs font-black">{team.shortName}</span>
+    </div>
+  );
+}
+
 export function PredictionForm({
   matchId,
   homeTeam,
@@ -155,7 +164,7 @@ export function PredictionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div className="hidden grid-cols-[1fr_auto_1fr] items-center gap-3 sm:grid">
         <TeamLabel team={homeTeam} />
 
         <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-background/70 p-2">
@@ -197,6 +206,49 @@ export function PredictionForm({
         <TeamLabel team={awayTeam} align="right" />
       </div>
 
+      <div className="rounded-xl border border-white/10 bg-background/60 p-3 sm:hidden">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+          <MobileTeamHeader team={homeTeam} />
+          <span className="pt-8 text-sm font-black uppercase tracking-[0.16em] text-muted-foreground">vs</span>
+          <MobileTeamHeader team={awayTeam} />
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <label className="sr-only" htmlFor={`home-score-mobile-${matchId}`}>
+            {homeTeam.name} goals
+          </label>
+          <Input
+            id={`home-score-mobile-${matchId}`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={30}
+            value={homeGoals}
+            onChange={(e) => setHomeGoals(e.target.value)}
+            className="h-14 w-20 rounded-lg text-center text-2xl font-black"
+            placeholder="0"
+            disabled={isLocked}
+            aria-invalid={!!error}
+          />
+          <span className="text-2xl font-black text-muted-foreground">-</span>
+          <label className="sr-only" htmlFor={`away-score-mobile-${matchId}`}>
+            {awayTeam.name} goals
+          </label>
+          <Input
+            id={`away-score-mobile-${matchId}`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={30}
+            value={awayGoals}
+            onChange={(e) => setAwayGoals(e.target.value)}
+            className="h-14 w-20 rounded-lg text-center text-2xl font-black"
+            placeholder="0"
+            disabled={isLocked}
+            aria-invalid={!!error}
+          />
+        </div>
+      </div>
+
       {error && (
         <p className="flex items-center gap-2 rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" />
@@ -212,11 +264,11 @@ export function PredictionForm({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="inline-flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:justify-start">
           <Clock className="h-4 w-4" />
           Locks in {formatCountdown(timeLeft)}
         </span>
-        <Button type="submit" className="w-full sm:w-auto" disabled={saving || isLocked}>
+        <Button type="submit" className="h-11 w-full sm:h-9 sm:w-auto" disabled={saving || isLocked}>
           {saving ? "Saving..." : existingPrediction ? "Update prediction" : "Save prediction"}
         </Button>
       </div>

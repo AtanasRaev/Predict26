@@ -122,13 +122,13 @@ export default async function FixturesPage({ searchParams }: PageProps) {
   const grouped = groupByDate(matches, filter === "past");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
             Match center
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight">Fixtures</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Fixtures</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Browse every match and lock predictions before kickoff.
           </p>
@@ -141,11 +141,11 @@ export default async function FixturesPage({ searchParams }: PageProps) {
           {EMPTY_MESSAGES[filter]}
         </p>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-7 sm:space-y-8">
           {grouped.map(([dateKey, dayMatches]) => (
             <section key={dateKey}>
-              <div className="mb-3 flex items-center gap-3">
-                <h2 className="whitespace-nowrap text-sm font-black text-foreground">
+              <div className="mb-3 flex items-center gap-2 sm:gap-3">
+                <h2 className="min-w-0 truncate text-sm font-black text-foreground">
                   {formatDateHeader(dateKey)}
                 </h2>
                 <div className="h-px flex-1 bg-white/10" />
