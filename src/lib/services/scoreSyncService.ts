@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { fetchMatchesByDateRange } from "@/lib/football-data/client";
 import { mapStatus } from "@/lib/football-data/mappers";
+import { FOOTBALL_DATA_COMPETITION } from "@/lib/constants";
 import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
 
 const SCORE_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
@@ -50,7 +51,11 @@ export async function syncRecentScores(
       .toISOString()
       .slice(0, 10);
 
-    const data = await fetchMatchesByDateRange("BSA", dateFrom, dateTo); // TEST MODE — revert to "WC"
+    const data = await fetchMatchesByDateRange(
+      FOOTBALL_DATA_COMPETITION,
+      dateFrom,
+      dateTo
+    );
     incrementRequests();
 
     let synced = 0;

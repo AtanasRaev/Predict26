@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { withTransientDbRetry } from "@/lib/dbRetry";
+import type { Prisma } from "@/generated/prisma/client";
 import { PushBroadcastControl } from "@/components/admin/PushBroadcastControl";
 import { SyncControls } from "@/components/admin/SyncControls";
 import Link from "next/link";
@@ -17,23 +19,40 @@ function formatDateTime(date: Date | string) {
   }).format(new Date(date));
 }
 
+type RecentMatch = Prisma.MatchGetPayload<{
+  include: { homeTeam: true; awayTeam: true };
+}>;
+
 export default async function AdminPage() {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") redirect("/");
 
-  const [syncLogs, recentMatches, pushSubscriptionCount] = await Promise.all([
-    prisma.apiSyncLog.findMany({
-      orderBy: { startedAt: "desc" },
-      take: 20,
-    }),
-    prisma.match.findMany({
-      where: { status: "FINISHED" },
-      include: { homeTeam: true, awayTeam: true },
-      orderBy: { utcDate: "desc" },
-      take: 10,
-    }),
-    prisma.pushSubscription.count(),
-  ]);
+  let databaseError: string | null = null;
+  let syncLogs: Awaited<ReturnType<typeof prisma.apiSyncLog.findMany>> = [];
+  let recentMatches: RecentMatch[] = [];
+  let pushSubscriptionCount = 0;
+
+  try {
+    [syncLogs, recentMatches, pushSubscriptionCount] = await withTransientDbRetry(() =>
+      prisma.$transaction([
+        prisma.apiSyncLog.findMany({
+          orderBy: { startedAt: "desc" },
+          take: 20,
+        }),
+        prisma.match.findMany({
+          where: { status: "FINISHED" },
+          include: { homeTeam: true, awayTeam: true },
+          orderBy: { utcDate: "desc" },
+          take: 10,
+        }),
+        prisma.pushSubscription.count(),
+      ])
+    );
+  } catch (error) {
+    console.error("[Admin Page] Failed to load dashboard data", error);
+    databaseError =
+      error instanceof Error ? error.message : "Unable to load dashboard data";
+  }
 
   return (
     <div className="space-y-8">
@@ -41,6 +60,12 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-bold">Admin Panel</h1>
         <p className="text-muted-foreground text-sm">Sync data and manage matches</p>
       </div>
+
+      {databaseError ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          Database connection failed: {databaseError}
+        </div>
+      ) : null}
 
       {/* Sync controls */}
       <section>

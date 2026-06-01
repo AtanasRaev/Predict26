@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, handleAdminError } from "@/lib/utils/adminGuard";
+import { FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON } from "@/lib/constants";
 
 const BASE_URL = "https://api.football-data.org/v4";
 
@@ -22,10 +23,11 @@ export async function GET() {
     }
 
     const results = await Promise.all([
-      probe("/competitions/BSA/matches?season=2026", apiKey),
-      probe("/competitions/BSA/matches?season=2025", apiKey),
-      probe("/competitions/BSA", apiKey),
-      probe("/competitions/WC/matches?season=2026", apiKey),
+      probe(
+        `/competitions/${FOOTBALL_DATA_COMPETITION}/matches?season=${FOOTBALL_DATA_SEASON}`,
+        apiKey
+      ),
+      probe(`/competitions/${FOOTBALL_DATA_COMPETITION}`, apiKey),
     ]);
 
     return NextResponse.json({ apiKeyPrefix: apiKey.slice(0, 6) + "...", results });

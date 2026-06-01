@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { fetchStandings } from "@/lib/football-data/client";
+import { FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON } from "@/lib/constants";
 import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
 
 const STANDINGS_COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes
@@ -31,7 +32,7 @@ export async function syncStandings(
   }
 
   return withSyncLog("STANDINGS", async (incrementRequests) => {
-    const data = await fetchStandings("BSA", 2026); // TEST MODE — revert to ("WC", 2026)
+    const data = await fetchStandings(FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON);
     incrementRequests();
 
     let synced = 0;

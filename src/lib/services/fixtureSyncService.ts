@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { fetchMatches } from "@/lib/football-data/client";
 import { mapStatus, isKnockoutStage } from "@/lib/football-data/mappers";
+import { FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON } from "@/lib/constants";
 import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
 
 const FIXTURE_COOLDOWN_MS = 12 * 60 * 60 * 1000; // 12 hours
@@ -32,7 +33,7 @@ export async function syncFixtures(
   }
 
   return withSyncLog("FIXTURES", async (incrementRequests) => {
-    const data = await fetchMatches("BSA", 2026); // TEST MODE — revert to ("WC", 2026)
+    const data = await fetchMatches(FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON);
     incrementRequests();
 
     let synced = 0;

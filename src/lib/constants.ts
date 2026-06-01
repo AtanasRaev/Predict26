@@ -1,6 +1,8 @@
-// TEST MODE: using Serie A 2025/26 — revert to WC dates when done
-export const WORLD_CUP_START = new Date("2025-08-01T00:00:00.000Z");
-export const WORLD_CUP_END = new Date("2026-07-31T23:59:59.999Z");
+export const FOOTBALL_DATA_COMPETITION = "WC";
+export const FOOTBALL_DATA_SEASON = 2026;
+
+export const WORLD_CUP_START = new Date("2026-06-11T00:00:00.000Z");
+export const WORLD_CUP_END = new Date("2026-07-19T23:59:59.999Z");
 
 /**
  * Lock predictions 60 seconds before kickoff to absorb clock drift
