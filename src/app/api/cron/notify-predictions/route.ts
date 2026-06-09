@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendPredictionReminders } from "@/lib/services/notificationService";
+import { sendPredictionOpenedNotifications, sendPredictionReminders } from "@/lib/services/notificationService";
 
 export const runtime = "nodejs";
 
 /**
  * GET /api/cron/notify-predictions
  *
- * This is now also called automatically by the main score-sync cron
- * (GET /api/cron/sync-scores) so no separate cron schedule is needed.
+ * This is also called automatically by the main score-sync cron
+ * (GET /api/cron/sync-scores), so no separate cron schedule is needed.
  *
  * Keep this endpoint for manual testing:
  *   curl -H "x-cron-secret: <secret>" https://yoursite.com/api/cron/notify-predictions
@@ -18,6 +18,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await sendPredictionReminders();
-  return NextResponse.json({ ok: true, ...result });
+  const [openedResult, reminderResult] = await Promise.all([
+    sendPredictionOpenedNotifications(),
+    sendPredictionReminders(),
+  ]);
+
+  return NextResponse.json({
+    ok: true,
+    notifications: { opened: openedResult, reminder: reminderResult },
+  });
 }
