@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { fetchMatchesByDateRange } from "@/lib/football-data/client";
-import { mapStatus } from "@/lib/football-data/mappers";
+import { getPredictionScore, mapStatus } from "@/lib/football-data/mappers";
 import { FOOTBALL_DATA_COMPETITION } from "@/lib/constants";
 import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
 
@@ -71,6 +71,7 @@ export async function syncRecentScores(
       });
 
       if (!existingMatch) continue;
+      const predictionScore = getPredictionScore(fdMatch.score);
 
       // Detect status transition to FINISHED
       const wasNotFinished = existingMatch.status !== "FINISHED";
@@ -95,8 +96,8 @@ export async function syncRecentScores(
         where: { id: existingMatch.id },
         data: {
           status: newStatus,
-          homeScore: fdMatch.score.fullTime.home,
-          awayScore: fdMatch.score.fullTime.away,
+          homeScore: predictionScore.home,
+          awayScore: predictionScore.away,
           winnerTeamId,
           lastSyncedAt: new Date(),
         },

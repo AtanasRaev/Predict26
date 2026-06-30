@@ -1,6 +1,8 @@
 import { MatchStatus } from "@/generated/prisma/client";
+import type { FDScore } from "./types";
 
 const KNOCKOUT_STAGES = new Set([
+  "LAST_32",
   "ROUND_OF_32",
   "ROUND_OF_16",
   "QUARTER_FINALS",
@@ -29,4 +31,11 @@ export function mapStatus(fdStatus: string): MatchStatus {
 
 export function isKnockoutStage(stage: string): boolean {
   return KNOCKOUT_STAGES.has(stage);
+}
+
+export function getPredictionScore(score: FDScore): {
+  home: number | null;
+  away: number | null;
+} {
+  return score.regularTime ?? score.fullTime;
 }

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { fetchMatches } from "@/lib/football-data/client";
-import { mapStatus, isKnockoutStage } from "@/lib/football-data/mappers";
+import { getPredictionScore, mapStatus, isKnockoutStage } from "@/lib/football-data/mappers";
 import { FOOTBALL_DATA_COMPETITION, FOOTBALL_DATA_SEASON } from "@/lib/constants";
 import { withSyncLog, getLastSuccessfulSync } from "./syncLogger";
 
@@ -93,6 +93,7 @@ export async function syncFixtures(
 
       const status = mapStatus(fdMatch.status);
       const knockout = isKnockoutStage(fdMatch.stage);
+      const predictionScore = getPredictionScore(fdMatch.score);
 
       // Determine winner team ID if available
       let winnerTeamId: string | null = null;
@@ -109,8 +110,8 @@ export async function syncFixtures(
           stage: fdMatch.stage,
           group: fdMatch.group ?? null,
           status,
-          homeScore: fdMatch.score.fullTime.home,
-          awayScore: fdMatch.score.fullTime.away,
+          homeScore: predictionScore.home,
+          awayScore: predictionScore.away,
           winnerTeamId,
           isKnockout: knockout,
           lastSyncedAt: new Date(),
@@ -120,8 +121,8 @@ export async function syncFixtures(
           stage: fdMatch.stage,
           group: fdMatch.group ?? null,
           status,
-          homeScore: fdMatch.score.fullTime.home,
-          awayScore: fdMatch.score.fullTime.away,
+          homeScore: predictionScore.home,
+          awayScore: predictionScore.away,
           winnerTeamId,
           isKnockout: knockout,
           lastSyncedAt: new Date(),
